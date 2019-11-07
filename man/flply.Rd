@@ -7,7 +7,7 @@
 flply(input, FUN, ..., key.sep = "\\t", sep = "\\t", skip = 0,
   header = TRUE, nchunks = Inf, stringsAsFactors = FALSE,
   select = NULL, drop = NULL, col.names = NULL, index = NULL,
-  max.size = 1073741824, parallel = 1)
+  max.size = 536870912, parallel = 1)
 }
 \arguments{
 \item{input}{Path of the input file.}

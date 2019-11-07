@@ -6,8 +6,6 @@
 #' @return Returns the number of chunks that were processed. As a side effect,
 #'     writes the processed data.table to the output file.#'
 #'
-#' @import data.table
-#' @import iotools
 #' @export
 ffply <- function(input, output = "", FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,

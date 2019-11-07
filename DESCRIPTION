@@ -9,9 +9,8 @@ Description: fplyr is a package to read and process a delimited file chunk by
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Depends:
-    data.table
 Imports:
+    data.table,
     iotools,
     parallel
 Suggests:

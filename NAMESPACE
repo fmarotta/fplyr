@@ -3,4 +3,3 @@
 export(ffply)
 export(flply)
 import(data.table)
-import(iotools)
