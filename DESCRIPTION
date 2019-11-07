@@ -1,0 +1,23 @@
+Package: fplyr
+Type: Package
+Title: Read files by chunks
+Version: 0.1.0
+Authors@R: person("Federico", "Marotta", email = "federico.marotta@edu.unito.it", role = c("aut", "cre"))
+Description: fplyr is a package to read and process a delimited file chunk by
+    chunk. A chunk consists of all the rows that have the same value in the
+    first field.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Depends:
+    data.table
+Imports:
+    iotools,
+    parallel
+Suggests:
+    knitr,
+    qpdf,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
+RoxygenNote: 6.1.1
