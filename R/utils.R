@@ -49,7 +49,7 @@ GetHeader <- function(input, col.names, header, sep) {
 }
 
 # NOTE: the maximum chunk size is 4GB, after which rawToChar will
-# complain about its not supporting long vectors.
+# complain about its lack of support for long vectors.
 DefineFormatter <- function(sep, stringsAsFactors, head, select, drop, index) {
     function(chunk) {
         # Define the fread formatter: it reads the raw chunk and returns a
@@ -59,23 +59,24 @@ DefineFormatter <- function(sep, stringsAsFactors, head, select, drop, index) {
                 stringsAsFactors = stringsAsFactors, col.names = head,
                 select = select, drop = drop,
                 key = head[1], index = index)
-        } else {
-            rbind(
-                data.table::fread(rawToChar(chunk[1:2147483647]), sep = sep, header = FALSE,
-                stringsAsFactors = stringsAsFactors, col.names = head,
-                select = select, drop = drop,
-                key = head[1], index = index),
-                data.table::fread(rawToChar(chunk[2147483648:length(chunk)]), sep = sep, header = FALSE,
-                stringsAsFactors = stringsAsFactors, col.names = head,
-                select = select, drop = drop,
-                key = head[1], index = index)
+        } else if (length(chunk) < 4294967296 - 65536) {
+            gc()
+            nl <- grepRaw("\n", chunk[(2147483648 - 65536):2147483648]) + 2147483648 - 65536 - 1
+            rbind(data.table::fread(rawToChar(chunk[1:nl]),
+                                    sep = sep, header = FALSE,
+                                    stringsAsFactors = stringsAsFactors, col.names = head,
+                                    select = select, drop = drop,
+                                    key = head[1], index = index),
+                  data.table::fread(rawToChar(chunk[(nl + 1):length(chunk)]),
+                                    sep = sep, header = FALSE,
+                                    stringsAsFactors = stringsAsFactors, col.names = head,
+                                    select = select, drop = drop,
+                                    key = head[1], index = index)
             )
+        } else {
+            warning(paste("This chunk is too big. Skipping it."))
+            return(NULL)
         }
     }
 }
 
-# The following function is slower than reading one chunk at a time with read.chunk.
-# Don't use it until a faster way to read multiple chunks is implemented.
-read.chunks <- function(cr) {
-    c(iotools::read.chunk(cr), iotools::read.chunk(cr), iotools::read.chunk(cr), iotools::read.chunk(cr), iotools::read.chunk(cr), iotools::read.chunk(cr), iotools::read.chunk(cr), iotools::read.chunk(cr))
-}

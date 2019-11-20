@@ -4,16 +4,13 @@
 \name{fplyr}
 \alias{fplyr}
 \alias{fplyr-package}
-\title{fplyr: Read, Process and Write}
+\title{foo: A package for computating the notorious bar statistic.}
 \description{
-This package provides a set of functions to quickly read files chunk by
-chunk, apply a function to each chunk, and return the result. It is
-especially useful when the files to be processed don't fit into the
-RAM.
+The foo package provides three categories of important functions:
+foo, bar and baz.
 }
-\section{Main functions}{
+\section{Foo functions}{
 
-The main functions are ffply and flply. The former writes the processed
-data into a file, while the latter returns it as a list.
+The foo functions ...
 }
 

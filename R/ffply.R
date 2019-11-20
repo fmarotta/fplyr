@@ -6,6 +6,8 @@
 #' @return Returns the number of chunks that were processed. As a side effect,
 #'     writes the processed data.table to the output file.#'
 #'
+#' @import data.table
+#' @import iotools
 #' @export
 ffply <- function(input, output = "", FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
@@ -53,13 +55,11 @@ ffply <- function(input, output = "", FUN, ...,
                 # d <- data.table::rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
                 # names(d)[1] <- fc
                 # d
-                tryCatch({
-                    d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
-                    if (is.data.table(d) && nrow(d) > 0)
-                        d
-                    else
-                        list()
-                }, error = function(e) {return(list())})
+                d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
+                if (is.data.table(d) && nrow(d) > 0)
+                    d
+                else
+                    list()
             })
         }
         if (length(worker_queue) == 0)
@@ -81,13 +81,11 @@ ffply <- function(input, output = "", FUN, ...,
                 worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
                     # l <- split(dtstrsplit(r), by = eval(fc), keep.by = T)
                     # data.table::rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
-                    tryCatch({
                     d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
                     if (is.data.table(d) && nrow(d) > 0)
                         d
                     else
                         list()
-                    }, error = function(e) {return(list())})
                 })
                 r <- iotools::read.chunk(cr, max.size = max.size)
             }

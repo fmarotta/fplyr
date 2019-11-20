@@ -1,7 +1,7 @@
 Package: fplyr
 Type: Package
 Title: Read files by chunks
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: person("Federico", "Marotta", email = "federico.marotta@edu.unito.it", role = c("aut", "cre"))
 Description: fplyr is a package to read and process a delimited file chunk by
     chunk. A chunk consists of all the rows that have the same value in the
@@ -9,8 +9,9 @@ Description: fplyr is a package to read and process a delimited file chunk by
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Depends:
+    data.table
 Imports:
-    data.table,
     iotools,
     parallel
 Suggests:
