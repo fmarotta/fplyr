@@ -11,6 +11,34 @@ flply(input, FUN, ..., key.sep = "\\t", sep = "\\t", skip = 0,
 }
 \arguments{
 \item{input}{Path of the input file.}
+
+\item{FUN}{Function to be applied to each chunk.}
+
+\item{...}{Additional arguments to be passed to FUN.}
+
+\item{key.sep}{The character that delimits the first field from the rest.}
+
+\item{sep}{The field delimiter.}
+
+\item{skip}{Number of lines to skip at the beginning of the file}
+
+\item{header}{Whether the file has a header.}
+
+\item{nchunks}{The number of chunks to read.}
+
+\item{stringsAsFactors}{Whether to convert strings into factors.}
+
+\item{select}{The columns to be read.}
+
+\item{drop}{The columns not to be read.}
+
+\item{col.names}{Names of the columns.}
+
+\item{index}{The index to assign the data.table when it is read.}
+
+\item{max.size}{The maximum size of the chunk (NB: a chunk can contain many blocks).}
+
+\item{parallel}{Number of cores to use.}
 }
 \value{
 Returns a list containing, for each chunk, the result of the

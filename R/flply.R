@@ -1,12 +1,10 @@
 #' Read, process and return a list.
 #'
-#' @param input Path of the input file.
+#' @inheritParams ffply
 #'
 #' @return Returns a list containing, for each chunk, the result of the
 #' processing.
 #'
-#' @import data.table
-#' @import iotools
 #' @export
 flply <- function(input, FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,

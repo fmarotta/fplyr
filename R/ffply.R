@@ -2,12 +2,24 @@
 #'
 #' @param input Path of the input file.
 #' @param output Path of the output file.
+#' @param FUN Function to be applied to each chunk.
+#' @param ... Additional arguments to be passed to FUN.
+#' @param key.sep The character that delimits the first field from the rest.
+#' @param sep The field delimiter.
+#' @param skip Number of lines to skip at the beginning of the file
+#' @param header Whether the file has a header.
+#' @param nchunks The number of chunks to read.
+#' @param stringsAsFactors Whether to convert strings into factors.
+#' @param select The columns to be read.
+#' @param drop The columns not to be read.
+#' @param col.names Names of the columns.
+#' @param index The index to assign the data.table when it is read.
+#' @param max.size The maximum size of the chunk (NB: a chunk can contain many blocks).
+#' @param parallel Number of cores to use.
 #'
 #' @return Returns the number of chunks that were processed. As a side effect,
-#'     writes the processed data.table to the output file.#'
+#'     writes the processed data.table to the output file.
 #'
-#' @import data.table
-#' @import iotools
 #' @export
 ffply <- function(input, output = "", FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
