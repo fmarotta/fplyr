@@ -1,36 +1,68 @@
-#' Read, process and return a list.
+#' Read, process each block and return a list
 #'
-#' @inheritParams ffply
+#' With \code{flply} you can apply a function to each block of the file separately.
+#' The result of each function is saved into a list and returned. \code{flply}
+#' is similar to \code{lapply()}, except that it applies the function to each
+#' block of the file rather than to each element of a list. It is also similar
+#' to \code{by()}, except that it does not read the whole file into memory, but
+#' each block is processed as soon as it is read from the disk.
+#'
+#' @inheritParams fdply
+#' @param FUN A function to be applied to each block. The first argument to the
+#'     function must be a \code{data.table} containing the current block. Additional
+#'     arguments can be passed with \code{...}.
+#' @param ... Additional arguments to be passed to FUN.
 #'
 #' @return Returns a list containing, for each chunk, the result of the
 #' processing.
 #'
+#' @section Slogan:
+#' fdply: from \strong{f}ile to \strong{l}ist
+#'
+#' @examples
+#' f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+#'
+#' # Compute, within each block, the correlation between Sepal.Length and Petal.Length
+#' flply(f, function(d) cor(d$Sepal.Length, d$Petal.Length))
+#'
+#' # Summarise each block
+#' flply(f, summary)
+#'
+#' # Make a different linear model for each block
+#' block.lm <- function(d) {
+#'   lm(Sepal.Length ~ ., data = d[, !"Species"])
+#' }
+#' lm.list <- flply(f, block.lm)
+#'
 #' @export
 flply <- function(input, FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
-                  nchunks = Inf, stringsAsFactors = FALSE,
+                  nblocks = Inf, stringsAsFactors = FALSE,
                   select = NULL, drop = NULL, col.names = NULL,
-                  index = NULL, max.size = 536870912, parallel = 1) {
+                  parallel = 1) {
     # Prepare the input, find the header and define the formatter.
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
-    dtstrsplit <- DefineFormatter(sep, stringsAsFactors, head, select, drop, index)
+    dtstrsplit <- DefineFormatter(sep, stringsAsFactors, head, select, drop)
     on.exit(close(input))
+
+    if (parallel > 1 && .Platform$OS.type != "unix") {
+        warning("parallel is not supported on non-unix systems")
+        parallel <- 1
+    }
 
     # Initialise the reader.
     cr <- iotools::chunk.reader(input, sep = key.sep)
-
     # Parse the file
     i <- 0
     res <- list()
     if (parallel == 1) {
-        while (i < nchunks && length(r <- iotools::read.chunk(cr))) {
+        while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
             d <- dtstrsplit(r)
             l <- by(d, d[, 1], FUN, ...)
-            if (is.null(l))
-                next()
+            l <- l[1:(min(nblocks - i, length(l)))]
+            i <- i + length(l)
             res <- append(res, l)
-            i <- i + 1
         }
     } else {
         worker_queue = list()
@@ -47,8 +79,11 @@ flply <- function(input, FUN, ...,
             return(NULL)
         if (length(r) > 0)
             r <- iotools::read.chunk(cr)
-        while (i < nchunks && length(worker_queue)) {
-            res <- append(res, parallel::mccollect(worker_queue[[1]])[[1]])
+        while (i < nblocks && length(worker_queue)) {
+            l <- parallel::mccollect(worker_queue[[1]])[[1]]
+            l <- l[1:(min(nblocks - i, length(l)))]
+            i <- i + length(l)
+            res <- append(res, l)
             worker_queue[1] = NULL
             if (length(r) > 0) {
                 worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
@@ -57,10 +92,8 @@ flply <- function(input, FUN, ...,
                 })
                 r <- iotools::read.chunk(cr)
             }
-            i <- i + 1
         }
     }
-
     res
 }
 

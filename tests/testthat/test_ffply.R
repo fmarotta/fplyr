@@ -1,5 +1,4 @@
 context("File Health")
-library(data.table)
 
 file <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 

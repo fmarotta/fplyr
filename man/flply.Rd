@@ -2,41 +2,50 @@
 % Please edit documentation in R/flply.R
 \name{flply}
 \alias{flply}
-\title{Read, process and return a list.}
+\title{Read, process each block and return a list}
 \usage{
-flply(input, FUN, ..., key.sep = "\\t", sep = "\\t", skip = 0,
-  header = TRUE, nchunks = Inf, stringsAsFactors = FALSE,
-  select = NULL, drop = NULL, col.names = NULL, index = NULL,
-  max.size = 536870912, parallel = 1)
+flply(
+  input,
+  FUN,
+  ...,
+  key.sep = "\\t",
+  sep = "\\t",
+  skip = 0,
+  header = TRUE,
+  nblocks = Inf,
+  stringsAsFactors = FALSE,
+  select = NULL,
+  drop = NULL,
+  col.names = NULL,
+  parallel = 1
+)
 }
 \arguments{
 \item{input}{Path of the input file.}
 
-\item{FUN}{Function to be applied to each chunk.}
+\item{FUN}{A function to be applied to each block. The first argument to the
+function must be a \code{data.table} containing the current block. Additional
+arguments can be passed with \code{...}.}
 
 \item{...}{Additional arguments to be passed to FUN.}
 
 \item{key.sep}{The character that delimits the first field from the rest.}
 
-\item{sep}{The field delimiter.}
+\item{sep}{The field delimiter (often equal to key.sep).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
 
 \item{header}{Whether the file has a header.}
 
-\item{nchunks}{The number of chunks to read.}
+\item{nblocks}{The number of blocks to read.}
 
 \item{stringsAsFactors}{Whether to convert strings into factors.}
 
-\item{select}{The columns to be read.}
+\item{select}{The columns (names or numbers) to be read.}
 
-\item{drop}{The columns not to be read.}
+\item{drop}{The columns (names or numbers) not to be read.}
 
 \item{col.names}{Names of the columns.}
-
-\item{index}{The index to assign the data.table when it is read.}
-
-\item{max.size}{The maximum size of the chunk (NB: a chunk can contain many blocks).}
 
 \item{parallel}{Number of cores to use.}
 }
@@ -45,5 +54,31 @@ Returns a list containing, for each chunk, the result of the
 processing.
 }
 \description{
-Read, process and return a list.
+With \code{flply} you can apply a function to each block of the file separately.
+The result of each function is saved into a list and returned. \code{flply}
+is similar to \code{lapply()}, except that it applies the function to each
+block of the file rather than to each element of a list. It is also similar
+to \code{by()}, except that it does not read the whole file into memory, but
+each block is processed as soon as it is read from the disk.
+}
+\section{Slogan}{
+
+fdply: from \strong{f}ile to \strong{l}ist
+}
+
+\examples{
+f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+
+# Compute, within each block, the correlation between Sepal.Length and Petal.Length
+flply(f, function(d) cor(d$Sepal.Length, d$Petal.Length))
+
+# Summarise each block
+flply(f, summary)
+
+# Make a different linear model for each block
+block.lm <- function(d) {
+  lm(Sepal.Length ~ ., data = d[, !"Species"])
+}
+lm.list <- flply(f, block.lm)
+
 }

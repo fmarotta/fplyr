@@ -1,18 +1,46 @@
-#' Read the whole file into a data.table
+#' Read some chunks from a file into a \code{data.table}
 #'
-#' @inheritParams ffply
-#' @param nblocks The number of blocks to read. A block is different from a chunk in that chunks can contain many blocks.
+#' This function is useful to quickly glance at a big chunked file. It is similar
+#' to the \code{head()} function, except that it does not read the first few lines, but
+#' rather the first few blocks of the file. By default, only the first block will be read;
+#' it is not advisable to read a large number of blocks in this way because they may
+#' occupy a lot of memory. The blocks are saved to a \code{data.table}. See \code{?fplyr}
+#' for the definitions of chunked file and block.
 #'
-#' @return A data.table. It is not advised to read a high number of blocks in this way.
+#' @param input Path of the input file.
+#' @param key.sep The character that delimits the first field from the rest.
+#' @param sep The field delimiter (often equal to key.sep).
+#' @param skip Number of lines to skip at the beginning of the file
+#' @param header Whether the file has a header.
+#' @param nblocks The number of blocks to read.
+#' @param stringsAsFactors Whether to convert strings into factors.
+#' @param select The columns (names or numbers) to be read.
+#' @param drop The columns (names or numbers) not to be read.
+#' @param col.names Names of the columns.
+#' @param parallel Number of cores to use.
+#'
+#' @return A data.table containing the file truncated to the number of blocks specified.
+#'
+#' @section Slogan:
+#' fdply: from \strong{f}ile to \strong{d}ata.table
+#'
+#' @examples
+#' f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+#'
+#' # Read only "setosa"
+#' dt <- fdply(f, nblocks = 1)
+#'
+#' # Read only "setosa" and "versicolor"
+#' dt <- fdply(f, 2)
+#'
 #' @export
-fdply <- function(input, key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
-                  nblocks = 1, stringsAsFactors = FALSE,
+fdply <- function(input, nblocks = 1, key.sep = "\t", sep = "\t", skip = 0,
+                  header = TRUE, stringsAsFactors = FALSE,
                   select = NULL, drop = NULL, col.names = NULL,
-                  index = NULL, max.size = 536870912, parallel = 1) {
+                  parallel = 1) {
     l <- flply(input, function(d) d, key.sep = key.sep, sep = sep, skip = skip, header = header,
-               nchunks = nblocks, stringsAsFactors = stringsAsFactors,
+               nblocks = nblocks, stringsAsFactors = stringsAsFactors,
                select = select, drop = drop, col.names = col.names,
-               index = index, max.size = max.size, parallel = parallel)
-    l <- l[1:nblocks]
+               parallel = parallel)
     do.call("rbind", l)
 }

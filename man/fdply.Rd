@@ -2,43 +2,68 @@
 % Please edit documentation in R/fdply.R
 \name{fdply}
 \alias{fdply}
-\title{Read the whole file into a data.table}
+\title{Read some chunks from a file into a \code{data.table}}
 \usage{
-fdply(input, key.sep = "\\t", sep = "\\t", skip = 0, header = TRUE,
-  nblocks = 1, stringsAsFactors = FALSE, select = NULL,
-  drop = NULL, col.names = NULL, index = NULL,
-  max.size = 536870912, parallel = 1)
+fdply(
+  input,
+  nblocks = 1,
+  key.sep = "\\t",
+  sep = "\\t",
+  skip = 0,
+  header = TRUE,
+  stringsAsFactors = FALSE,
+  select = NULL,
+  drop = NULL,
+  col.names = NULL,
+  parallel = 1
+)
 }
 \arguments{
 \item{input}{Path of the input file.}
 
+\item{nblocks}{The number of blocks to read.}
+
 \item{key.sep}{The character that delimits the first field from the rest.}
 
-\item{sep}{The field delimiter.}
+\item{sep}{The field delimiter (often equal to key.sep).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
 
 \item{header}{Whether the file has a header.}
 
-\item{nblocks}{The number of blocks to read. A block is different from a chunk in that chunks can contain many blocks.}
-
 \item{stringsAsFactors}{Whether to convert strings into factors.}
 
-\item{select}{The columns to be read.}
+\item{select}{The columns (names or numbers) to be read.}
 
-\item{drop}{The columns not to be read.}
+\item{drop}{The columns (names or numbers) not to be read.}
 
 \item{col.names}{Names of the columns.}
-
-\item{index}{The index to assign the data.table when it is read.}
-
-\item{max.size}{The maximum size of the chunk (NB: a chunk can contain many blocks).}
 
 \item{parallel}{Number of cores to use.}
 }
 \value{
-A data.table. It is not advised to read a high number of blocks in this way.
+A data.table containing the file truncated to the number of blocks specified.
 }
 \description{
-Read the whole file into a data.table
+This function is useful to quickly glance at a big chunked file. It is similar
+to the \code{head()} function, except that it does not read the first few lines, but
+rather the first few blocks of the file. By default, only the first block will be read;
+it is not advisable to read a large number of blocks in this way because they may
+occupy a lot of memory. The blocks are saved to a \code{data.table}. See \code{?fplyr}
+for the definitions of chunked file and block.
+}
+\section{Slogan}{
+
+fdply: from \strong{f}ile to \strong{d}ata.table
+}
+
+\examples{
+f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+
+# Read only "setosa"
+dt <- fdply(f, nblocks = 1)
+
+# Read only "setosa" and "versicolor"
+dt <- fdply(f, 2)
+
 }

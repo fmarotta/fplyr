@@ -1,107 +1,171 @@
-#' Read, process and write.
+#' Read, process each block and write the result
 #'
-#' @param input Path of the input file.
-#' @param output Path of the output file.
-#' @param FUN Function to be applied to each chunk.
-#' @param ... Additional arguments to be passed to FUN.
-#' @param key.sep The character that delimits the first field from the rest.
-#' @param sep The field delimiter.
-#' @param skip Number of lines to skip at the beginning of the file
-#' @param header Whether the file has a header.
-#' @param nchunks The number of chunks to read.
-#' @param stringsAsFactors Whether to convert strings into factors.
-#' @param select The columns to be read.
-#' @param drop The columns not to be read.
-#' @param col.names Names of the columns.
-#' @param index The index to assign the data.table when it is read.
-#' @param max.size The maximum size of the chunk (NB: a chunk can contain many blocks).
-#' @param parallel Number of cores to use.
+#' Suppose you want to process each block of a file and the result is again
+#' a \code{data.table} that you want to print to some output file. One possible
+#' approach is to use \code{l <- flply(...)} followed by \code{do.call(rbind, l)}
+#' and \code{fwrite}, but this would be slow. \code{ffply} offers a faster
+#' solution to this problem.
+#'
+#' @inheritParams flply
+#' @param FUN Function to be applied to each block. It must take at least two arguments,
+#'     the first of which is a \code{data.table} containing the current block, \emph{without
+#'     the first field}; the second argument is a character vector containing the
+#'     value of the first field for the current block.
+#' @param output String containing the path to the output file.
 #'
 #' @return Returns the number of chunks that were processed. As a side effect,
-#'     writes the processed data.table to the output file.
+#'     writes the processed \code{data.table} to the output file.
+#'
+#' @section Slogan:
+#' ffply: from \strong{f}ile to \strong{f}ile
+#'
+#' @examples
+#' f1 <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+#' f2 <- tempfile()
+#'
+#' # Copy the first two blocks from f1 into f2 to obtain a shorter but
+#' # consistent version of the original input file.
+#' ffply(f1, f2, function(d, by) {return(d)}, nblocks = 2)
+#'
+#' # Compute the mean of the columns for each species
+#' ffply(f1, f2, function(d, by) d[, lapply(.SD, mean)])
+#'
+#' # Reshape the file, block by block
+#' ffply(f1, f2, function(d, by) {
+#'     val <- do.call(c, d)
+#'     var <- rep(names(d), each = nrow(d))
+#'     data.table(Var = var, Val = val)
+#' })
 #'
 #' @export
 ffply <- function(input, output = "", FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
-                  nchunks = Inf, stringsAsFactors = FALSE,
+                  nblocks = Inf, stringsAsFactors = FALSE,
                   select = NULL, drop = NULL, col.names = NULL,
-                  index = NULL, max.size = 536870912, parallel = 1) {
+                  parallel = 1) {
     # Open the connections. The input must be binary, so that chunk.reader is
     # happy; the output is handled by data.table's fwrite.
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
-    dtstrsplit <- DefineFormatter(sep, stringsAsFactors, head, select, drop, index)
+    dtstrsplit <- DefineFormatter(sep, stringsAsFactors, head, select, drop)
     on.exit(close(input))
+
+    if (parallel > 1 && .Platform$OS.type != "unix") {
+        warning("parallel is not supported on non-unix systems")
+        parallel <- 1
+    }
 
     # Initialise the reader.
     cr <- iotools::chunk.reader(input, sep = key.sep)
 
     # Parse the file
-    i <- 0 # keep track of the number of chunks parsed
+    i <- 0 # keep track of the number of blocks parsed
     fc <- head[1] # first column
     if (parallel == 1) {
-        while (i < nchunks && length(r <- iotools::read.chunk(cr, max.size = max.size))) {
+        while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
             # l <- split(dtstrsplit(r), by = eval(fc), keep.by = T)
-            # d <- data.table::rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
-            d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
-            if (is.null(d) || nrow(d) == 0)
+            # d <- rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
+            d <- dtstrsplit(r)
+            u <- unique(d[[1]])
+            d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]][, FUN(.SD, .BY, ...), by = eval(fc)]
+            if (is.null(d) || nrow(d) == 0) {
+                for (k in 1:length(u))
+                    if (i + k <= nblocks)
+                        warning(paste0("Block ", i + k, " returned an empty data.table."))
+                i <- i + min(nblocks - i, length(u))
                 next()
-            if (i == 0 && !is.null(names(d))) {
-                names(d)[1] <- fc
-                data.table::fwrite(d, file = output,
-                       sep = sep, quote = FALSE)
+            }
+            v <- unique(d[[1]])
+            if (length(v) != length(u)) {
+                for (k in which(! u %in% v))
+                    if (i + k <= nblocks)
+                        warning(paste0("Block ", i + k, " returned an empty data.table."))
+            }
+            if (i == 0) {
+                if (all(names(d) == c(fc, paste0("V", 1:(length(d) - 1))))) {
+                    fwrite(d, file = output, col.names = FALSE,
+                                       sep = sep, quote = FALSE)
+                } else {
+                    fwrite(d, file = output, col.names = TRUE,
+                                       sep = sep, quote = FALSE)
+                }
             } else {
-                data.table::fwrite(d, file = output, append = TRUE,
+                fwrite(d, file = output, append = TRUE,
                        sep = sep, quote = FALSE, col.names = FALSE)
             }
-            i <- i + 1
+            i <- i + min(nblocks - i, length(u))
         }
     } else {
         worker_queue = list()
         for (j in 1:max(parallel, 1)) {
-            r <- iotools::read.chunk(cr, max.size = max.size)
+            r <- iotools::read.chunk(cr)
             if (length(r) == 0)
                 break
             worker_queue[[j]] <- parallel::mcparallel({
                 # l <- split(dtstrsplit(r), by = eval(fc), keep.by = T)
-                # d <- data.table::rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
+                # d <- rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
                 # names(d)[1] <- fc
                 # d
-                d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
-                if (is.data.table(d) && nrow(d) > 0)
-                    d
-                else
-                    list()
+                d <- dtstrsplit(r)
+                u <- unique(d[[1]])
+                d <- d[, FUN(.SD, .BY, ...), by = eval(fc)]
+                # d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
+                if (is.data.table(d) && nrow(d) > 0) {
+                    v <- unique(d[[1]])
+                    list(d = d, u = u, v = v)
+                } else {
+                    list(d = NULL, u = u, v = NULL)
+                }
             })
         }
         if (length(worker_queue) == 0)
             return(NULL)
         if (length(r) > 0)
-            r <- iotools::read.chunk(cr, max.size = max.size)
-        while (i < nchunks && length(worker_queue)) {
+            r <- iotools::read.chunk(cr)
+        while (i < nblocks && length(worker_queue)) {
+            w <- parallel::mccollect(worker_queue[[1]])[[1]]
+            if (is.null(w$d) || nrow(w$d) == 0) {
+                for (k in 1:length(w$u))
+                    if (i + k <= nblocks)
+                        warning(paste0("Block ", i + k, " returned an empty data.table."))
+                i <- i + min(nblocks - i, length(w$u))
+                next()
+            }
+            w$d <- w$d[w$d[[1]] %in% w$u[1:(min(nblocks - i, length(w$u)))]]
+            if (length(w$v) != length(w$u)) {
+                for (k in which(! w$u %in% w$v))
+                    if (i + k <= nblocks)
+                        warning(paste0("Block ", i + k, " returned an empty data.table."))
+            }
             if (i == 0) {
-                data.table::fwrite(parallel::mccollect(worker_queue[[1]])[[1]],
-                                   file = output, sep = sep, quote = FALSE)
+                if (all(names(w$d) == c(fc, paste0("V", 1:(length(w$d) - 1))))) {
+                    fwrite(w$d, file = output, col.names = FALSE,
+                                       sep = sep, quote = FALSE)
+                } else {
+                    fwrite(w$d, file = output, col.names = TRUE,
+                                       sep = sep, quote = FALSE)
+                }
             } else {
-                data.table::fwrite(parallel::mccollect(worker_queue[[1]])[[1]],
-                                   file = output, sep = sep, quote = FALSE,
-                                   append = TRUE, col.names = FALSE)
+                fwrite(w$d, file = output, append = TRUE,
+                                   sep = sep, quote = FALSE, col.names = FALSE)
             }
             worker_queue[1] = NULL
+            i <- i + min(nblocks - i, length(w$u))
 
             if (length(r) > 0) {
                 worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
-                    # l <- split(dtstrsplit(r), by = eval(fc), keep.by = T)
-                    # data.table::rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
-                    d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
-                    if (is.data.table(d) && nrow(d) > 0)
-                        d
-                    else
-                        list()
+                    d <- dtstrsplit(r)
+                    u <- unique(d[[1]])
+                    d <- d[, FUN(.SD, .BY, ...), by = eval(fc)]
+                    if (is.data.table(d) && nrow(d) > 0) {
+                        v <- unique(d[[1]])
+                        list(d = d, u = u, v = v)
+                    } else {
+                        list(d = NULL, u = u, v = NULL)
+                    }
                 })
-                r <- iotools::read.chunk(cr, max.size = max.size)
+                r <- iotools::read.chunk(cr)
             }
-            i <- i + 1
         }
     }
     invisible(i)

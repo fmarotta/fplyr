@@ -3,4 +3,5 @@
 export(fdply)
 export(ffply)
 export(flply)
+export(fmply)
 import(data.table)

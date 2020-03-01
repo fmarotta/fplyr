@@ -18,3 +18,16 @@ microbenchmark(
     }, parallel = 3),
     times = 100
 )
+
+microbenchmark(
+    ffply(file, "/dev/null", FUN = function(d, by) {
+        d[Sepal.Length < 5, .(Petal.Sum = sum(Petal.Length))]
+    }),
+    {
+        l <- flply(file, FUN = function(d) {
+            d[Sepal.Length < 5, .(Petal.Sum = sum(Petal.Length)), by = "Species"]
+        })
+        fwrite(do.call("rbind", l), "/dev/null")
+    },
+    times = 100
+)

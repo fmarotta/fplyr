@@ -2,50 +2,89 @@
 % Please edit documentation in R/ffply.R
 \name{ffply}
 \alias{ffply}
-\title{Read, process and write.}
+\title{Read, process each block and write the result}
 \usage{
-ffply(input, output = "", FUN, ..., key.sep = "\\t", sep = "\\t",
-  skip = 0, header = TRUE, nchunks = Inf, stringsAsFactors = FALSE,
-  select = NULL, drop = NULL, col.names = NULL, index = NULL,
-  max.size = 536870912, parallel = 1)
+ffply(
+  input,
+  output = "",
+  FUN,
+  ...,
+  key.sep = "\\t",
+  sep = "\\t",
+  skip = 0,
+  header = TRUE,
+  nblocks = Inf,
+  stringsAsFactors = FALSE,
+  select = NULL,
+  drop = NULL,
+  col.names = NULL,
+  parallel = 1
+)
 }
 \arguments{
 \item{input}{Path of the input file.}
 
-\item{output}{Path of the output file.}
+\item{output}{String containing the path to the output file.}
 
-\item{FUN}{Function to be applied to each chunk.}
+\item{FUN}{Function to be applied to each block. It must take at least two arguments,
+the first of which is a \code{data.table} containing the current block, \emph{without
+the first field}; the second argument is a character vector containing the
+value of the first field for the current block.}
 
 \item{...}{Additional arguments to be passed to FUN.}
 
 \item{key.sep}{The character that delimits the first field from the rest.}
 
-\item{sep}{The field delimiter.}
+\item{sep}{The field delimiter (often equal to key.sep).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
 
 \item{header}{Whether the file has a header.}
 
-\item{nchunks}{The number of chunks to read.}
+\item{nblocks}{The number of blocks to read.}
 
 \item{stringsAsFactors}{Whether to convert strings into factors.}
 
-\item{select}{The columns to be read.}
+\item{select}{The columns (names or numbers) to be read.}
 
-\item{drop}{The columns not to be read.}
+\item{drop}{The columns (names or numbers) not to be read.}
 
 \item{col.names}{Names of the columns.}
-
-\item{index}{The index to assign the data.table when it is read.}
-
-\item{max.size}{The maximum size of the chunk (NB: a chunk can contain many blocks).}
 
 \item{parallel}{Number of cores to use.}
 }
 \value{
 Returns the number of chunks that were processed. As a side effect,
-writes the processed data.table to the output file.
+writes the processed \code{data.table} to the output file.
 }
 \description{
-Read, process and write.
+Suppose you want to process each block of a file and the result is again
+a \code{data.table} that you want to print to some output file. One possible
+approach is to use \code{l <- flply(...)} followed by \code{do.call(rbind, l)}
+and \code{fwrite}, but this would be slow. \code{ffply} offers a faster
+solution to this problem.
+}
+\section{Slogan}{
+
+ffply: from \strong{f}ile to \strong{f}ile
+}
+
+\examples{
+f1 <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+f2 <- tempfile()
+
+# Copy the first two blocks from f1 into f2 to obtain a shorter but
+# consistent version of the original input file.
+ffply(f1, f2, function(d, by) {return(d)}, nblocks = 2)
+
+# Compute the mean of the columns for each species
+ffply(f1, f2, function(d, by) d[, lapply(.SD, mean)])
+
+# Reshape the file, block by block
+ffply(f1, f2, function(d, by) {
+    val <- do.call(c, d)
+    var <- rep(names(d), each = nrow(d))
+    data.table(Var = var, Val = val)
+})
+
 }

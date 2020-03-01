@@ -1,8 +1,3 @@
-# TODO: key should always be the first field in dtstrsplit(). We cannot
-# pass the col.name because after the first chunk, columns don't have
-# names...
-
-
 OpenInput <- function(input, skip) {
     # Open the connections. The input must be binary, so that chunk.reader is
     # happy; the output is handled by data.table's fwrite.
@@ -49,34 +44,33 @@ GetHeader <- function(input, col.names, header, sep) {
 }
 
 # NOTE: the maximum chunk size is 4GB, after which rawToChar will
-# complain about its lack of support for long vectors.
-DefineFormatter <- function(sep, stringsAsFactors, head, select, drop, index) {
+# complain about its lacking support for long vectors.
+DefineFormatter <- function(sep, stringsAsFactors, head, select, drop) {
     function(chunk) {
         # Define the fread formatter: it reads the raw chunk and returns a
         # mighty data.table. Inspired by mstrsplit and dstrsplit.
         if (length(chunk) < 2147483648) {
-            data.table::fread(rawToChar(chunk), sep = sep, header = FALSE,
+            fread(rawToChar(chunk), sep = sep, header = FALSE,
                 stringsAsFactors = stringsAsFactors, col.names = head,
                 select = select, drop = drop,
-                key = head[1], index = index)
+                key = head[1])
         } else if (length(chunk) < 4294967296 - 65536) {
             gc()
             nl <- grepRaw("\n", chunk[(2147483648 - 65536):2147483648]) + 2147483648 - 65536 - 1
-            rbind(data.table::fread(rawToChar(chunk[1:nl]),
+            rbind(fread(rawToChar(chunk[1:nl]),
                                     sep = sep, header = FALSE,
                                     stringsAsFactors = stringsAsFactors, col.names = head,
                                     select = select, drop = drop,
-                                    key = head[1], index = index),
-                  data.table::fread(rawToChar(chunk[(nl + 1):length(chunk)]),
+                                    key = head[1]),
+                  fread(rawToChar(chunk[(nl + 1):length(chunk)]),
                                     sep = sep, header = FALSE,
                                     stringsAsFactors = stringsAsFactors, col.names = head,
                                     select = select, drop = drop,
-                                    key = head[1], index = index)
+                                    key = head[1])
             )
         } else {
-            warning(paste("This chunk is too big. Skipping it."))
+            warning("The current chunk is too big. Skipping it.")
             return(NULL)
         }
     }
 }
-

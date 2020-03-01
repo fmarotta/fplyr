@@ -9,7 +9,9 @@
 #' @param outputs Vector of \emph{m} paths for the output files.
 #' @param FUN A function to apply to each block. Takes as input a \code{data.table}
 #'     and optionally additional arguments. It must return a list of length
-#'     \emph{m}, the same length as the \code{outputs} vector.
+#'     \emph{m}, the same length as the \code{outputs} vector. The first element
+#'     of the list is written to the first output file, the second element of the
+#'     list to the second output file, and so on.
 #'
 #' @return Returns invisibly the number of blocks parsed. As a side effect, it
 #' writes the outputs of \code{FUN} to the \code{outputs} files.
@@ -29,11 +31,11 @@
 #'     list(d, data.table(unclass(summary(d))))
 #' })
 #'
-#' fout1 <- tempfile()
-#' fout2 <- tempfile()
+#' fout3 <- tempfile()
+#' fout4 <- tempfile()
 #'
 #' # Use linear and polynomial regression and print the outputs to two files
-#' fmply(fin, c(fout1, fout2), function(d) {
+#' fmply(fin, c(fout3, fout4), function(d) {
 #'     lr.fit <- lm(Sepal.Length ~ ., data = d[, !"Species"])
 #'     lr.summ <- data.table(Species = d$Species[1], t(coefficients(lr.fit)))
 #'     pr.fit <- lm(Sepal.Length ~ poly(as.matrix(d[, 3:5]), degree = 3),
