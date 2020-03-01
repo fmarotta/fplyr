@@ -50,6 +50,7 @@ fmply <- function(input, outputs, FUN, ...,
                   nblocks = Inf, stringsAsFactors = FALSE,
                   select = NULL, drop = NULL, col.names = NULL,
                   parallel = 1) {
+# browser()
     # Prepare the input, find the header and define the formatter.
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
@@ -66,31 +67,37 @@ fmply <- function(input, outputs, FUN, ...,
 
     # Parse the file
     i <- 0
+    res <- list()
     if (parallel == 1) {
         while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
             d <- dtstrsplit(r)
+            u <- unique(d[[1]])
+            d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]]
             l <- by(d, d[, 1], FUN, ...)
-            l <- l[1:(min(nblocks - i, length(l)))]
-            m <- lapply(seq_along(outputs), function(f) {
-                do.call("rbind", lapply(l, "[[", f))
+            m <- lapply(seq_along(outputs), function(j) {
+                do.call("rbind", lapply(l, "[[", j))
             })
+            if (length(l[[1]]) > length(outputs)) {
+                n <- lapply(l, "[[", length(l[[1]]))
+                res <- append(res, n)
+            }
             if (i == 0) {
-                lapply(seq_along(m), function(i) {
-                    if (is.null(m[[i]]))
-                        m[[i]] <- list()
-                    if (all(names(m[[i]]) == paste0("V", 1:length(m[[i]])))) {
-                        fwrite(m[[i]], file = outputs[i], col.names = FALSE,
+                lapply(seq_along(outputs), function(j) {
+                    if (is.null(m[[j]]))
+                        m[[j]] <- list()
+                    if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
+                        fwrite(m[[j]], file = outputs[j], col.names = FALSE,
                                            sep = sep, quote = FALSE)
                     } else {
-                        fwrite(m[[i]], file = outputs[i], col.names = TRUE,
+                        fwrite(m[[j]], file = outputs[j], col.names = TRUE,
                                            sep = sep, quote = FALSE)
                     }
                 })
             } else {
-                lapply(seq_along(m), function(i) {
-                    if (is.null(m[[i]]))
-                        m[[i]] <- list()
-                    fwrite(m[[i]], file = outputs[i], append = TRUE,
+                lapply(seq_along(outputs), function(j) {
+                    if (is.null(m[[j]]))
+                        m[[j]] <- list()
+                    fwrite(m[[j]], file = outputs[j], append = TRUE,
                                        sep = sep, quote = FALSE, col.names = FALSE)
                 })
             }
@@ -114,22 +121,26 @@ fmply <- function(input, outputs, FUN, ...,
         while (i < nblocks && length(worker_queue)) {
             l <- parallel::mccollect(worker_queue[[1]])[[1]]
             l <- l[1:(min(nblocks - i, length(l)))]
-            m <- lapply(seq_along(outputs), function(f) {
-                do.call("rbind", lapply(l, "[[", f))
+            m <- lapply(seq_along(outputs), function(j) {
+                do.call("rbind", lapply(l, "[[", j))
             })
+            if (length(l[[1]]) > length(outputs)) {
+                n <- lapply(l, "[[", length(l[[1]]))
+                res <- append(res, n)
+            }
             if (i == 0) {
-                lapply(seq_along(m), function(i) {
-                    if (all(names(m[[i]]) == paste0("V", 1:length(m[[i]])))) {
-                        fwrite(m[[i]], file = outputs[i], col.names = FALSE,
+                lapply(seq_along(m), function(j) {
+                    if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
+                        fwrite(m[[j]], file = outputs[j], col.names = FALSE,
                                            sep = sep, quote = FALSE)
                     } else {
-                        fwrite(m[[i]], file = outputs[i], col.names = TRUE,
+                        fwrite(m[[j]], file = outputs[j], col.names = TRUE,
                                            sep = sep, quote = FALSE)
                     }
                 })
             } else {
-                lapply(seq_along(m), function(i) {
-                    fwrite(m[[i]], file = outputs[i], append = TRUE,
+                lapply(seq_along(m), function(j) {
+                    fwrite(m[[j]], file = outputs[j], append = TRUE,
                                        sep = sep, quote = FALSE, col.names = FALSE)
                 })
             }
@@ -145,5 +156,5 @@ fmply <- function(input, outputs, FUN, ...,
             }
         }
     }
-    invisible(i)
+    return(res)
 }

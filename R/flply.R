@@ -59,8 +59,9 @@ flply <- function(input, FUN, ...,
     if (parallel == 1) {
         while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
             d <- dtstrsplit(r)
+            u <- unique(d[[1]])
+            d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]]
             l <- by(d, d[, 1], FUN, ...)
-            l <- l[1:(min(nblocks - i, length(l)))]
             i <- i + length(l)
             res <- append(res, l)
         }

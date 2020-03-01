@@ -1,7 +1,7 @@
 Package: fplyr
 Type: Package
 Title: Apply Functions to Blocks of Files
-Version: 1.0.2
+Version: 1.1.0
 Authors@R: person("Federico", "Marotta", email = "federicomarotta@mail.com",
     role = c("aut", "cre"), comment = c(ORCID = "0000-0002-0174-3901"))
 Maintainer: Federico Marotta <federicomarotta@mail.com>
