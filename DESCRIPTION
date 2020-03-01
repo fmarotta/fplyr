@@ -1,24 +1,23 @@
 Package: fplyr
 Type: Package
-Title: Read files by chunks
-Version: 0.3.0
-Authors@R: person("Federico", "Marotta", email = "federico.marotta@edu.unito.it", role = c("aut", "cre"))
-Maintainer: Federico Marotta <federico.marotta@edu.unito.it>
-Description: fplyr is a package to read and process a delimited file chunk by
-    chunk. A chunk consists of all the rows that have the same value in the
-    first field.
+Title: Read Files by Blocks
+Version: 1.0.0
+Authors@R: person("Federico", "Marotta", email = "federicomarotta@mail.com",
+    role = c("aut", "cre"), comment = c(ORCID = "0000-0002-0174-3901"))
+Maintainer: Federico Marotta <federicomarotta@mail.com>
+Description: Read and process a large delimited file block by
+    block. A block consists of all the contiguous rows that have the same value
+    in the first field. The result can be saved as a list or printed to an
+    output file.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Depends:
+    data.table (>= 1.12.8)
 Imports:
-    data.table,
-    iotools,
-    parallel
+    iotools (>= 0.2),
+    parallel (>= 3.5.1)
 Suggests:
-    knitr,
-    qpdf,
-    rmarkdown,
     testthat
-VignetteBuilder: knitr
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
