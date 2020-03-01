@@ -1,0 +1,143 @@
+#' Read, process and write to multiple output files
+#'
+#' Sometimes a file should be processed in many different ways. \code{fmply}
+#' applies a function to each block of the file; the function should return a
+#' list of \emph{m} \code{data.table}s, each of which is written to a different
+#' output file.
+#'
+#' @inheritParams ffply
+#' @param outputs Vector of \emph{m} paths for the output files.
+#' @param FUN A function to apply to each block. Takes as input a \code{data.table}
+#'     and optionally additional arguments. It must return a list of length
+#'     \emph{m}, the same length as the \code{outputs} vector.
+#'
+#' @return Returns invisibly the number of blocks parsed. As a side effect, it
+#' writes the outputs of \code{FUN} to the \code{outputs} files.
+#'
+#' @section Slogan:
+#' fmply: from \strong{f}ile to \strong{m}ultiple files
+#'
+#' @examples
+#'
+#' fin <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+#' fout1 <- tempfile()
+#' fout2 <- ""
+#'
+#' # Copy the input file to tempfile as it is, and, at the same time, print
+#' # a summary to the console
+#' fmply(fin, c(fout1, fout2), function(d) {
+#'     list(d, data.table(unclass(summary(d))))
+#' })
+#'
+#' fout1 <- tempfile()
+#' fout2 <- tempfile()
+#'
+#' # Use linear and polynomial regression and print the outputs to two files
+#' fmply(fin, c(fout1, fout2), function(d) {
+#'     lr.fit <- lm(Sepal.Length ~ ., data = d[, !"Species"])
+#'     lr.summ <- data.table(Species = d$Species[1], t(coefficients(lr.fit)))
+#'     pr.fit <- lm(Sepal.Length ~ poly(as.matrix(d[, 3:5]), degree = 3),
+#'                  data = d[, !"Species"])
+#'     pr.summ <- data.table(Species = d$Species[1], t(coefficients(pr.fit)))
+#'     list(lr.summ, pr.summ)
+#' })
+#'
+#' @export
+fmply <- function(input, outputs, FUN, ...,
+                  key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
+                  nblocks = Inf, stringsAsFactors = FALSE,
+                  select = NULL, drop = NULL, col.names = NULL,
+                  parallel = 1) {
+    # Prepare the input, find the header and define the formatter.
+    input <- OpenInput(input, skip)
+    head <- GetHeader(input, col.names, header, sep)
+    dtstrsplit <- DefineFormatter(sep, stringsAsFactors, head, select, drop)
+    on.exit(close(input))
+
+    if (parallel > 1 && .Platform$OS.type != "unix") {
+        warning("parallel is not supported on non-unix systems")
+        parallel <- 1
+    }
+
+    # Initialise the reader.
+    cr <- iotools::chunk.reader(input, sep = key.sep)
+
+    # Parse the file
+    i <- 0
+    if (parallel == 1) {
+        while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
+            d <- dtstrsplit(r)
+            l <- by(d, d[, 1], FUN, ...)
+            l <- l[1:(min(nblocks - i, length(l)))]
+            m <- lapply(seq_along(outputs), function(f) {
+                do.call("rbind", lapply(l, "[[", f))
+            })
+            if (i == 0) {
+                lapply(seq_along(m), function(i) {
+                    if (all(names(m[[i]]) == paste0("V", 1:length(m[[i]])))) {
+                        fwrite(m[[i]], file = outputs[i], col.names = FALSE,
+                                           sep = sep, quote = FALSE)
+                    } else {
+                        fwrite(m[[i]], file = outputs[i], col.names = TRUE,
+                                           sep = sep, quote = FALSE)
+                    }
+                })
+            } else {
+                lapply(seq_along(m), function(i) {
+                    fwrite(m[[i]], file = outputs[i], append = TRUE,
+                                       sep = sep, quote = FALSE, col.names = FALSE)
+                })
+            }
+            i <- i + length(l)
+        }
+    } else {
+        worker_queue = list()
+        for (j in 1:max(parallel, 1)) {
+            r <- iotools::read.chunk(cr)
+            if (length(r) == 0)
+                break
+            worker_queue[[j]] <- parallel::mcparallel({
+                d <- dtstrsplit(r);
+                by(d, d[, 1], FUN, ...)
+            })
+        }
+        if (length(worker_queue) == 0)
+            return(NULL)
+        if (length(r) > 0)
+            r <- iotools::read.chunk(cr)
+        while (i < nblocks && length(worker_queue)) {
+            l <- parallel::mccollect(worker_queue[[1]])[[1]]
+            l <- l[1:(min(nblocks - i, length(l)))]
+            m <- lapply(seq_along(outputs), function(f) {
+                do.call("rbind", lapply(l, "[[", f))
+            })
+            if (i == 0) {
+                lapply(seq_along(m), function(i) {
+                    if (all(names(m[[i]]) == paste0("V", 1:length(m[[i]])))) {
+                        fwrite(m[[i]], file = outputs[i], col.names = FALSE,
+                                           sep = sep, quote = FALSE)
+                    } else {
+                        fwrite(m[[i]], file = outputs[i], col.names = TRUE,
+                                           sep = sep, quote = FALSE)
+                    }
+                })
+            } else {
+                lapply(seq_along(m), function(i) {
+                    fwrite(m[[i]], file = outputs[i], append = TRUE,
+                                       sep = sep, quote = FALSE, col.names = FALSE)
+                })
+            }
+            worker_queue[1] = NULL
+            i <- i + length(l)
+
+            if (length(r) > 0) {
+                worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
+                    d <- dtstrsplit(r);
+                    by(d, d[, 1], FUN, ...)
+                })
+                r <- iotools::read.chunk(cr)
+            }
+        }
+    }
+    invisible(i)
+}
