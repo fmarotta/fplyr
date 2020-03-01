@@ -76,6 +76,8 @@ fmply <- function(input, outputs, FUN, ...,
             })
             if (i == 0) {
                 lapply(seq_along(m), function(i) {
+                    if (is.null(m[[i]]))
+                        m[[i]] <- list()
                     if (all(names(m[[i]]) == paste0("V", 1:length(m[[i]])))) {
                         fwrite(m[[i]], file = outputs[i], col.names = FALSE,
                                            sep = sep, quote = FALSE)
@@ -86,6 +88,8 @@ fmply <- function(input, outputs, FUN, ...,
                 })
             } else {
                 lapply(seq_along(m), function(i) {
+                    if (is.null(m[[i]]))
+                        m[[i]] <- list()
                     fwrite(m[[i]], file = outputs[i], append = TRUE,
                                        sep = sep, quote = FALSE, col.names = FALSE)
                 })
