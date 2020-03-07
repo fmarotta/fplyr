@@ -14,11 +14,11 @@ to use \code{fplyr}.
 \section{Definitions}{
 
 \describe{
-\item{Chunked file}{A delimited file where many contiguous rows have
+\item{Chunked file:}{A delimited file where many contiguous rows have
 the same value on the first field. See the example below.}
-\item{Block}{Any portion of the chunked file such that the first field
+\item{Block:}{Any portion of the chunked file such that the first field
 does not change.}
-\item{Chunk}{Chunks are used internally; they consist of one or more block, but
+\item{Chunk:}{Chunks are used internally; they consist of one or more block, but
 regular users should not be concerned with them, and can consider chunks
 and blocks as synonyms.}
 }
@@ -40,25 +40,25 @@ Throughout the documentation of this package, the word 'file' actually means
 'chunked file.'
 }
 
-\examples{
-\dontrun{
-A chunked file may look as follows:
+\section{Examples}{
 
-V1   V2  V3 V4
-ID01 ABC Berlin 0.1
-ID01 DEF London 0.5
-ID01 GHI Rome   0.3
-ID02 ABC Lisbon 0.2
-ID02 DEF Berlin 0.6
-ID02 LMN Prague 0.8
-ID02 OPQ Dublin 0.7
-ID03 DEF Lisbon -0.1
-ID03 LMN Berlin 0.01
-ID03 XYZ Prague 0.2
+A chunked file may look as follows:\tabular{llll}{
+   \strong{V1} \tab \strong{V2} \tab \strong{V3} \tab \strong{V4} \cr
+   ID01 \tab ABC \tab Berlin \tab 0.1 \cr
+   ID01 \tab DEF \tab London \tab 0.5 \cr
+   ID01 \tab GHI \tab Rome \tab 0.3 \cr
+   ID02 \tab ABC \tab Lisbon \tab 0.2 \cr
+   ID02 \tab DEF \tab Berlin \tab 0.6 \cr
+   ID02 \tab LMN \tab Prague \tab 0.8 \cr
+   ID02 \tab OPQ \tab Dublin \tab 0.7 \cr
+   ID03 \tab DEF \tab Lisbon \tab -0.1 \cr
+   ID03 \tab LMN \tab Berlin \tab 0.01 \cr
+   ID03 \tab XYZ \tab Prague \tab 0.2 \cr
+}
+
 
 The important thing is that the first field has some contigous lines that
 take the same value. The values of the other fields are unimportant. This
 package is useful to process this kind of files, block by block.
 }
 
-}

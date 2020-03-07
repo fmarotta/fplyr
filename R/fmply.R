@@ -50,7 +50,6 @@ fmply <- function(input, outputs, FUN, ...,
                   nblocks = Inf, stringsAsFactors = FALSE,
                   select = NULL, drop = NULL, col.names = NULL,
                   parallel = 1) {
-# browser()
     # Prepare the input, find the header and define the formatter.
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
@@ -156,5 +155,5 @@ fmply <- function(input, outputs, FUN, ...,
             }
         }
     }
-    return(res)
+    res
 }
