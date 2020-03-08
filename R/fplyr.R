@@ -45,7 +45,7 @@
 #' | ID03 | LMN  | Berlin | 0.01 |
 #' | ID03 | XYZ  | Prague | 0.2  |
 #'
-#' The important thing is that the first field has some contigous lines that
+#' The important thing is that the first field has some contiguous lines that
 #' take the same value. The values of the other fields are unimportant. This
 #' package is useful to process this kind of files, block by block.
 #'

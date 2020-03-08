@@ -31,7 +31,7 @@ arguments can be passed with \code{...}.}
 
 \item{key.sep}{The character that delimits the first field from the rest.}
 
-\item{sep}{The field delimiter (often equal to key.sep).}
+\item{sep}{The field delimiter (often equal to \code{key.sep}).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
 
@@ -54,8 +54,8 @@ Returns a list containing, for each chunk, the result of the
 processing.
 }
 \description{
-With \code{flply} you can apply a function to each block of the file separately.
-The result of each function is saved into a list and returned. \code{flply}
+With \code{flply()} you can apply a function to each block of the file separately.
+The result of each function is saved into a list and returned. \code{flply()}
 is similar to \code{lapply()}, except that it applies the function to each
 block of the file rather than to each element of a list. It is also similar
 to \code{by()}, except that it does not read the whole file into memory, but

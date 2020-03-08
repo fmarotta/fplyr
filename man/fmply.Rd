@@ -27,16 +27,17 @@ fmply(
 \item{outputs}{Vector of \emph{m} paths for the output files.}
 
 \item{FUN}{A function to apply to each block. Takes as input a \code{data.table}
-and optionally additional arguments. It must return a list of length
+and optionally additional arguments. It should return a list of length
 \emph{m}, the same length as the \code{outputs} vector. The first element
 of the list is written to the first output file, the second element of the
-list to the second output file, and so on.}
+list to the second output file, and so on. Besides these \emph{m} \code{data.table}s,
+it can return an additional element, which is also returned by \code{fmply()}.}
 
 \item{...}{Additional arguments to be passed to FUN.}
 
 \item{key.sep}{The character that delimits the first field from the rest.}
 
-\item{sep}{The field delimiter (often equal to key.sep).}
+\item{sep}{The field delimiter (often equal to \code{key.sep}).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
 
@@ -55,14 +56,19 @@ list to the second output file, and so on.}
 \item{parallel}{Number of cores to use.}
 }
 \value{
-Returns invisibly the number of blocks parsed. As a side effect, it
-writes the outputs of \code{FUN} to the \code{outputs} files.
+If \code{FUN} returns \emph{m} elements, \code{fmply()} returns
+invisibly the number of blocks parsed. If \code{FUN} returns \emph{m + 1}
+elements, \code{fmply()} returns the list of all the last elements. As a
+side effect, it writes the first \emph{m} outputs of \code{FUN} to the
+\code{outputs} files.
 }
 \description{
-Sometimes a file should be processed in many different ways. \code{fmply}
+Sometimes a file should be processed in many different ways. \code{fmply()}
 applies a function to each block of the file; the function should return a
 list of \emph{m} \code{data.table}s, each of which is written to a different
-output file.
+output file. Optionally, the function can return a list of \emph{m + 1},
+where the first \emph{m} elements are \code{data.table}s and are written
+to the output files, while the last element is returned as in \code{flply()}.
 }
 \section{Slogan}{
 

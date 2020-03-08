@@ -1,7 +1,7 @@
 #' Read, process each block and return a list
 #'
-#' With \code{flply} you can apply a function to each block of the file separately.
-#' The result of each function is saved into a list and returned. \code{flply}
+#' With \code{flply()} you can apply a function to each block of the file separately.
+#' The result of each function is saved into a list and returned. \code{flply()}
 #' is similar to \code{lapply()}, except that it applies the function to each
 #' block of the file rather than to each element of a list. It is also similar
 #' to \code{by()}, except that it does not read the whole file into memory, but
@@ -47,7 +47,7 @@ flply <- function(input, FUN, ...,
     on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
-        warning("parallel is not supported on non-unix systems")
+        warning("parallel > 1is not supported on non-unix systems")
         parallel <- 1
     }
 

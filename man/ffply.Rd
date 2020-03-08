@@ -35,7 +35,7 @@ value of the first field for the current block.}
 
 \item{key.sep}{The character that delimits the first field from the rest.}
 
-\item{sep}{The field delimiter (often equal to key.sep).}
+\item{sep}{The field delimiter (often equal to \code{key.sep}).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
 

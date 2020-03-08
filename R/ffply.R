@@ -51,7 +51,7 @@ ffply <- function(input, output = "", FUN, ...,
     on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
-        warning("parallel is not supported on non-unix systems")
+        warning("parallel > 1 is not supported on non-unix systems")
         parallel <- 1
     }
 
@@ -63,8 +63,6 @@ ffply <- function(input, output = "", FUN, ...,
     fc <- head[1] # first column
     if (parallel == 1) {
         while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
-            # l <- split(dtstrsplit(r), by = eval(fc), keep.by = T)
-            # d <- rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
             d <- dtstrsplit(r)
             u <- unique(d[[1]])
             d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]][, FUN(.SD, .BY, ...), by = eval(fc)]
@@ -102,14 +100,9 @@ ffply <- function(input, output = "", FUN, ...,
             if (length(r) == 0)
                 break
             worker_queue[[j]] <- parallel::mcparallel({
-                # l <- split(dtstrsplit(r), by = eval(fc), keep.by = T)
-                # d <- rbindlist(lapply(l, function(g) {cbind(g[[1]][1], FUN(g[, -1], g[[1]][1], ...))}))
-                # names(d)[1] <- fc
-                # d
                 d <- dtstrsplit(r)
                 u <- unique(d[[1]])
                 d <- d[, FUN(.SD, .BY, ...), by = eval(fc)]
-                # d <- dtstrsplit(r)[, FUN(.SD, .BY, ...), by = eval(fc)]
                 if (is.data.table(d) && nrow(d) > 0) {
                     v <- unique(d[[1]])
                     list(d = d, u = u, v = v)

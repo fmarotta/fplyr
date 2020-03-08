@@ -25,7 +25,7 @@ fdply(
 
 \item{key.sep}{The character that delimits the first field from the rest.}
 
-\item{sep}{The field delimiter (often equal to key.sep).}
+\item{sep}{The field delimiter (often equal to \code{key.sep}).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
 
@@ -42,7 +42,8 @@ fdply(
 \item{parallel}{Number of cores to use.}
 }
 \value{
-A data.table containing the file truncated to the number of blocks specified.
+A \code{data.table} containing the file truncated to the number of
+blocks specified.
 }
 \description{
 This function is useful to quickly glance at a big chunked file. It is similar

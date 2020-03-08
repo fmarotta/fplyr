@@ -1,4 +1,21 @@
-## New submission
+## Resubmission
+This is a resubmission adressing the comments of the CRAN maintainers; after the
+first submission, but before seeing the comments, I also discovered some
+other weaknesses of the package, which I have taken the liberty to adress by
+slightly altering the original files. In particular, in this resubmission:
+
+* The unexecutable code in man/fplyr.Rd has been removed; I was using a "not run"
+  code section to display textual information. Now this information is displayed
+  in a textual section, hopefully solving the problem.
+* Some functionalities have been added to fmply().
+* A bug has been fixed in flply() and ffply().
+* The documentation has been updated accordingly.
+* The year in the LICENSE file has been updated to 2020.
+* Additional tests have been performed as in the previous submission.
+* I am sorry about having altered the code, I will wait at least 1-2 months
+  before posting another update.
+
+## First submission
 This is the first time that this package is submitted.
 
 ## Test environments

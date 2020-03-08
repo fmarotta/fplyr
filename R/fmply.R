@@ -1,20 +1,26 @@
 #' Read, process and write to multiple output files
 #'
-#' Sometimes a file should be processed in many different ways. \code{fmply}
+#' Sometimes a file should be processed in many different ways. \code{fmply()}
 #' applies a function to each block of the file; the function should return a
 #' list of \emph{m} \code{data.table}s, each of which is written to a different
-#' output file.
+#' output file. Optionally, the function can return a list of \emph{m + 1},
+#' where the first \emph{m} elements are \code{data.table}s and are written
+#' to the output files, while the last element is returned as in \code{flply()}.
 #'
 #' @inheritParams ffply
 #' @param outputs Vector of \emph{m} paths for the output files.
 #' @param FUN A function to apply to each block. Takes as input a \code{data.table}
-#'     and optionally additional arguments. It must return a list of length
+#'     and optionally additional arguments. It should return a list of length
 #'     \emph{m}, the same length as the \code{outputs} vector. The first element
 #'     of the list is written to the first output file, the second element of the
-#'     list to the second output file, and so on.
+#'     list to the second output file, and so on. Besides these \emph{m} \code{data.table}s,
+#'     it can return an additional element, which is also returned by \code{fmply()}.
 #'
-#' @return Returns invisibly the number of blocks parsed. As a side effect, it
-#' writes the outputs of \code{FUN} to the \code{outputs} files.
+#' @return If \code{FUN} returns \emph{m} elements, \code{fmply()} returns
+#' invisibly the number of blocks parsed. If \code{FUN} returns \emph{m + 1}
+#' elements, \code{fmply()} returns the list of all the last elements. As a
+#' side effect, it writes the first \emph{m} outputs of \code{FUN} to the
+#' \code{outputs} files.
 #'
 #' @section Slogan:
 #' fmply: from \strong{f}ile to \strong{m}ultiple files
@@ -57,7 +63,7 @@ fmply <- function(input, outputs, FUN, ...,
     on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
-        warning("parallel is not supported on non-unix systems")
+        warning("parallel > 1 is not supported on non-unix systems")
         parallel <- 1
     }
 
@@ -82,8 +88,8 @@ fmply <- function(input, outputs, FUN, ...,
             }
             if (i == 0) {
                 lapply(seq_along(outputs), function(j) {
-                    if (is.null(m[[j]]))
-                        m[[j]] <- list()
+                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                        return()
                     if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
                         fwrite(m[[j]], file = outputs[j], col.names = FALSE,
                                            sep = sep, quote = FALSE)
@@ -94,8 +100,8 @@ fmply <- function(input, outputs, FUN, ...,
                 })
             } else {
                 lapply(seq_along(outputs), function(j) {
-                    if (is.null(m[[j]]))
-                        m[[j]] <- list()
+                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                        return()
                     fwrite(m[[j]], file = outputs[j], append = TRUE,
                                        sep = sep, quote = FALSE, col.names = FALSE)
                 })
@@ -129,6 +135,8 @@ fmply <- function(input, outputs, FUN, ...,
             }
             if (i == 0) {
                 lapply(seq_along(m), function(j) {
+                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                        return()
                     if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
                         fwrite(m[[j]], file = outputs[j], col.names = FALSE,
                                            sep = sep, quote = FALSE)
@@ -139,6 +147,8 @@ fmply <- function(input, outputs, FUN, ...,
                 })
             } else {
                 lapply(seq_along(m), function(j) {
+                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                        return()
                     fwrite(m[[j]], file = outputs[j], append = TRUE,
                            sep = sep, quote = FALSE, col.names = FALSE)
                 })

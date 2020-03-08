@@ -9,7 +9,7 @@
 #'
 #' @param input Path of the input file.
 #' @param key.sep The character that delimits the first field from the rest.
-#' @param sep The field delimiter (often equal to key.sep).
+#' @param sep The field delimiter (often equal to \code{key.sep}).
 #' @param skip Number of lines to skip at the beginning of the file
 #' @param header Whether the file has a header.
 #' @param nblocks The number of blocks to read.
@@ -19,7 +19,8 @@
 #' @param col.names Names of the columns.
 #' @param parallel Number of cores to use.
 #'
-#' @return A data.table containing the file truncated to the number of blocks specified.
+#' @return A \code{data.table} containing the file truncated to the number of
+#' blocks specified.
 #'
 #' @section Slogan:
 #' fdply: from \strong{f}ile to \strong{d}ata.table
