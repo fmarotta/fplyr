@@ -74,7 +74,7 @@ fmply <- function(input, outputs, FUN, ...,
             d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]]
             l <- by(d, d[, 1], FUN, ...)
             m <- lapply(seq_along(outputs), function(j) {
-                do.call("rbind", lapply(l, "[[", j))
+                rbindlist(lapply(l, "[[", j))
             })
             if (length(l[[1]]) > length(outputs)) {
                 n <- lapply(l, "[[", length(l[[1]]))
@@ -121,7 +121,7 @@ fmply <- function(input, outputs, FUN, ...,
             l <- parallel::mccollect(worker_queue[[1]])[[1]]
             l <- l[1:(min(nblocks - i, length(l)))]
             m <- lapply(seq_along(outputs), function(j) {
-                do.call("rbind", lapply(l, "[[", j))
+                rbindlist(lapply(l, "[[", j))
             })
             if (length(l[[1]]) > length(outputs)) {
                 n <- lapply(l, "[[", length(l[[1]]))
@@ -140,7 +140,7 @@ fmply <- function(input, outputs, FUN, ...,
             } else {
                 lapply(seq_along(m), function(j) {
                     fwrite(m[[j]], file = outputs[j], append = TRUE,
-                                       sep = sep, quote = FALSE, col.names = FALSE)
+                           sep = sep, quote = FALSE, col.names = FALSE)
                 })
             }
             worker_queue[1] = NULL

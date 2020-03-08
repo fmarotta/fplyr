@@ -42,5 +42,5 @@ fdply <- function(input, nblocks = 1, key.sep = "\t", sep = "\t", skip = 0,
                nblocks = nblocks, stringsAsFactors = stringsAsFactors,
                select = select, drop = drop, col.names = col.names,
                parallel = parallel)
-    do.call("rbind", l)
+    rbindlist(l)
 }
