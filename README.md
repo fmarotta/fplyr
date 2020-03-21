@@ -1,5 +1,10 @@
 # fplyr
 
+[![cran version-ago](https://www.r-pkg.org/badges/version-ago/fplyr)](https://www.r-pkg.org/badges/version-ago/fplyr)
+[![cran logs](https://cranlogs.r-pkg.org/badges/fplyr)](https://cranlogs.r-pkg.org/badges/fplyr)
+[![cran logs last-day](https://cranlogs.r-pkg.org/badges/last-day/fplyr)](https://cranlogs.r-pkg.org/badges/last-day/fplyr)
+[![cran logs grand-total](https://cranlogs.r-pkg.org/badges/grand-total/fplyr)](https://cranlogs.r-pkg.org/badges/grand-total/fplyr)
+
 This package combines the power of the `data.table` and `iotools` packages to
 efficiently read a large file block by block and, in the meantime, apply a
 user-specified function to each block of the file. The outputs can be collected
