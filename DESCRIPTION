@@ -19,5 +19,7 @@ Imports:
     parallel (>= 3.5.1)
 Suggests:
     testthat
+URL: https://github.com/fmarotta/fplyr
+BugReports: https://github.com/fmarotta/fplyr/issues
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.0.2
