@@ -17,7 +17,7 @@
 #' processing.
 #'
 #' @section Slogan:
-#' fdply: from \strong{f}ile to \strong{l}ist
+#' flply: from \strong{f}ile to \strong{l}ist
 #'
 #' @examples
 #' f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
