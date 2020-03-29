@@ -51,7 +51,7 @@ ftply <- function(input, FUN, ...,
     # Parse the file
     i <- 0 # keep track of the number of blocks parsed
     fc <- head[1] # first column
-	dt <- data.table() # return value
+    dt <- data.table() # return value
     if (parallel == 1) {
         while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
             d <- dtstrsplit(r)
@@ -70,8 +70,8 @@ ftply <- function(input, FUN, ...,
                     if (i + k <= nblocks)
                         warning(paste0("Block ", i + k, " returned an empty data.table."))
             }
-			dt <- rbind(dt, d)
-			i <- i + min(nblocks - i, length(u))
+            dt <- rbind(dt, d)
+            i <- i + min(nblocks - i, length(u))
         }
     } else {
         worker_queue = list()
@@ -110,8 +110,8 @@ ftply <- function(input, FUN, ...,
                     if (i + k <= nblocks)
                         warning(paste0("Block ", i + k, " returned an empty data.table."))
             }
-			dt <- rbind(dt, w$d)
-			worker_queue[1] = NULL
+            dt <- rbind(dt, w$d)
+            worker_queue[1] = NULL
             i <- i + min(nblocks - i, length(w$u))
 
             if (length(r) > 0) {
@@ -130,5 +130,5 @@ ftply <- function(input, FUN, ...,
             }
         }
     }
-	dt
+    dt
 }
