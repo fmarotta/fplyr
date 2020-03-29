@@ -52,25 +52,12 @@ DefineFormatter <- function(sep, stringsAsFactors, head, select, drop) {
         if (length(chunk) < 2147483648) {
             fread(rawToChar(chunk), sep = sep, header = FALSE,
                 stringsAsFactors = stringsAsFactors, col.names = head,
-                select = select, drop = drop,
-                key = head[1])
-        } else if (length(chunk) < 4294967296 - 65536) {
-            gc()
-            nl <- grepRaw("\n", chunk[(2147483648 - 65536):2147483648]) + 2147483648 - 65536 - 1
-            rbind(fread(rawToChar(chunk[1:nl]),
-                                    sep = sep, header = FALSE,
-                                    stringsAsFactors = stringsAsFactors, col.names = head,
-                                    select = select, drop = drop,
-                                    key = head[1]),
-                  fread(rawToChar(chunk[(nl + 1):length(chunk)]),
-                                    sep = sep, header = FALSE,
-                                    stringsAsFactors = stringsAsFactors, col.names = head,
-                                    select = select, drop = drop,
-                                    key = head[1])
-            )
-        } else {
-            warning("The current chunk is too big. Skipping it.")
-            return(NULL)
-        }
+                select = select, drop = drop)
+		} else {
+			fread(paste0(rawToChar(chunk, multiple = TRUE), collapse = ""),
+				  sep = sep, header = FALSE,
+				  stringsAsFactors = stringsAsFactors, col.names = head,
+				  select = select, drop = drop)
+		}
     }
 }

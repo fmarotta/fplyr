@@ -1,3 +1,8 @@
+# current developments
+
+* Fix typos in the docs
+* Allow blocks to be long
+
 # fplyr 1.1.0
 
 * All function now support the `nblocks` option
