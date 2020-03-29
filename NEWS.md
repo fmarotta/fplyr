@@ -1,7 +1,8 @@
 # current developments
 
 * Fix typos in the docs
-* Allow blocks to be long
+* Allow blocks to be `long`
+* Introduce `ftply()`, to return the output as a `data.table`
 
 # fplyr 1.1.0
 
