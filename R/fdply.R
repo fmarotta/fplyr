@@ -14,6 +14,7 @@
 #' @param header Whether the file has a header.
 #' @param nblocks The number of blocks to read.
 #' @param stringsAsFactors Whether to convert strings into factors.
+#' @param colClasses Vector or list specifying the class of each field.
 #' @param select The columns (names or numbers) to be read.
 #' @param drop The columns (names or numbers) not to be read.
 #' @param col.names Names of the columns.
@@ -36,11 +37,12 @@
 #'
 #' @export
 fdply <- function(input, nblocks = 1, key.sep = "\t", sep = "\t", skip = 0,
-                  header = TRUE, stringsAsFactors = FALSE,
+				  colClasses = NULL, header = TRUE, stringsAsFactors = FALSE,
                   select = NULL, drop = NULL, col.names = NULL,
                   parallel = 1) {
     l <- flply(input, function(d) d, key.sep = key.sep, sep = sep, skip = skip, header = header,
-               nblocks = nblocks, stringsAsFactors = stringsAsFactors,
+			   nblocks = nblocks, colClasses = colClasses, 
+			   stringsAsFactors = stringsAsFactors,
                select = select, drop = drop, col.names = col.names,
                parallel = parallel)
     rbindlist(l)

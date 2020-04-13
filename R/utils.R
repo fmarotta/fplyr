@@ -45,19 +45,19 @@ GetHeader <- function(input, col.names, header, sep) {
 
 # NOTE: the maximum chunk size is 4GB, after which rawToChar will
 # complain about its lacking support for long vectors.
-DefineFormatter <- function(sep, stringsAsFactors, head, select, drop) {
+DefineFormatter <- function(sep, colClasses, stringsAsFactors, head, select, drop) {
     function(chunk) {
         # Define the fread formatter: it reads the raw chunk and returns a
         # mighty data.table. Inspired by mstrsplit and dstrsplit.
         if (length(chunk) < 2147483648) {
             fread(rawToChar(chunk), sep = sep, header = FALSE,
                 stringsAsFactors = stringsAsFactors, col.names = head,
-                select = select, drop = drop)
+				colClasses = colClasses, select = select, drop = drop)
 		} else {
 			fread(paste0(rawToChar(chunk, multiple = TRUE), collapse = ""),
 				  sep = sep, header = FALSE,
 				  stringsAsFactors = stringsAsFactors, col.names = head,
-				  select = select, drop = drop)
+				  colClasses = colClasses, select = select, drop = drop)
 		}
     }
 }

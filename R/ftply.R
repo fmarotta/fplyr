@@ -30,14 +30,14 @@
 #' @export
 ftply <- function(input, FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
-                  nblocks = Inf, stringsAsFactors = FALSE,
+				  nblocks = Inf, stringsAsFactors = FALSE, colClasses = NULL,
                   select = NULL, drop = NULL, col.names = NULL,
                   parallel = 1) {
     # Open the connections. The input must be binary, so that chunk.reader is
     # happy; the output is handled by data.table's fwrite.
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
-    dtstrsplit <- DefineFormatter(sep, stringsAsFactors, head, select, drop)
+	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
     on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
