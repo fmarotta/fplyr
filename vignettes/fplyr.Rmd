@@ -1,0 +1,54 @@
+---
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{fplyr}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include = FALSE}
+library(fplyr)
+```
+
+# fplyr `r utils::packageVersion("fplyr")`
+
+### `r Sys.Date()`
+
+After briefly describing the problem that `fplyr` tries to solve, this vignette will go throug all the functions in the package, explaining their usage. In order to make the most of this package, a certain degree of familiarity with the `data.table` package is suggested. Often, if one has trouble understanding an option, it will be possible to find detailed help in the manual of `data.table`'s fread() function.
+
+## Introduction
+
+A very common operation when analysing data is that of splitting the observations into groups and applying a function to each group, separately. So common is this operation, that in R there are at least two functions that implement it: by() and aggregate(). However, using these functions requires that the data be loaded into the RAM, and often the files are too big to fit in the memory. `fplyr` was born to solve this problem: it allows to perform split-apply-combine operations to very big files; by reading the files chunk by chunk, only a limited number of rows is stored in memory at any given time.
+
+`fplyr` combines the strengths of two other packages: `iotools` and `data.table`. While `iotools` has some functions, such as chunk.apply(), to apply a function to chunks of files, the chunks may not reflect the actual groups in which the data are partitioned. In particular, a 'chunk' may contain observations pertaining to several different groups, and the task of furtherly splitting them is left to the user. In `fplyr`, on the other hand, the further splitting is done automatically (thanks also to the `data.table` package), so the user needs not worry about it.
+
+Throughout this vignette we 
+
+## Preconditions
+
+Before using `fplyr` you need to ensure that input file is in the correct format. First and foremost, the data must be amenable to the split-apply-combine paradigm, so the observations must be grouped according to the value of a certain field. We refer to the values of the  'groupby' field as the *subjects*. Thus, for instance, in the famous `iris` data set, each species would be a different subject. All the observations pertaining to the same subject constitute a *block*.
+
+In `fplyr` the input file must be formatted in such a way that the first field contains all the subject IDs. If the IDs are not in the first field, it won't work. Moreover, all the observations referring to the same subject must be consecutive; in other words, the file must be sorted on the first field, the reason being that the file is read block by block, so two observations that are very far apart in the file will not be read together and cannot be identified as belonging to the same block. Note that `fplyr` always ensures that all the rows with the same subject ID are read together in the same batch, but only if the rows are consecutive.
+
+Typical files that can be processed by `fplyr` include those that can be reshaped in long or wide format.
+
+## flply
+
+
+
+### Naming convention
+
+We followed the same convention of `plyr`. The name of each function consist of two letters followed by 'ply': the first letter represent the type of input, whereas the second letter characterises the type of output, and the final 'ply' clinches the relation with the existing 'apply' family of functions. The first letter is usually 'f', because the input is the path to a file. The second letter is 'l' if the output is a list, as in flply(), it is 't' if the output is a "data.table", and so on.
+
+## ftply
+
+## ffply
+
+## fmply

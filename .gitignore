@@ -38,3 +38,4 @@ rsconnect/
 
 # CRAN release message
 CRAN-RELEASE
+inst/doc
