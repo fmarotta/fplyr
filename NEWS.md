@@ -1,5 +1,6 @@
 # current developments
 
+* Add vignette
 * Fix typos in the docs
 * Allow blocks to be `long`
 * Introduce `ftply()`, to return the output as a `data.table`
