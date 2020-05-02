@@ -3,6 +3,7 @@
 * Fix typos in the docs
 * Allow blocks to be `long`
 * Introduce `ftply()`, to return the output as a `data.table`
+* Support colClasses
 
 # fplyr 1.1.0
 
