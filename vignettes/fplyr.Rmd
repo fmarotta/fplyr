@@ -147,7 +147,7 @@ head(flowers_head, 4)
 
 ### Parallelisation
 
-Another useful option is `parallel`, with which it is possible to specify the number of threads that `fplyr` can use. Like `nblocks`, also the `parallel` option is supported by all the functions. It is not necessary to initialise any cluster. In the following example we will select, for each block, a random sample of 10 observations.
+Another useful option is `parallel`, with which it is possible to specify the number of threads that `fplyr` can use. Like `nblocks`, also the `parallel` option is supported by all the functions. It is not necessary to initialise any cluster, but this option has effect only on Unix-like systems, not on Windows. In the following example we will select, for each block, a random sample of 10 observations.
 
 ```{r ftply_parallel}
 result <- ftply(f, parallel = 3, FUN = function(d, by) {
