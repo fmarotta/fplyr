@@ -1,13 +1,12 @@
-library(data.table)
 library(fplyr)
 library(ggplot2)
 library(iotools)
 library(microbenchmark)
 
-file <- "flights14_beheaded.csv"
-times <- 200
+file <- "flights14.csv"
+times <- 500
 sep = ","
-col.classes <- c("integer", "integer", "integer", "integer", "integer", 
+col.classes <- c("integer", "integer", "integer", "integer", "integer",
 				 "character", "character", "character",
 				 "integer", "integer", "integer")
 header = FALSE
@@ -34,14 +33,13 @@ mb <- microbenchmark(
 		  colClasses = col.classes,
 		  select = select,
 		  drop = drop),
-	dtstrsplit = dtstrsplit(readAsRaw("flights14_beheaded.csv")),
-	dstrsplit = dstrsplit(readAsRaw("flights14_beheaded.csv"),
+	dtstrsplit = dtstrsplit(readAsRaw(file)),
+	dstrsplit = dstrsplit(readAsRaw(file),
 			  col_types = col.classes,
 			  sep = sep),
 	times = times
 )
 mb$time <- mb$time / 1e6 # Convert to milliseconds
-saveRDS(mb, "mb.Rds")
 
 # Plot the results
 theme_set(theme_bw())
