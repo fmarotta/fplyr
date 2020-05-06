@@ -14,6 +14,7 @@ flply(
   header = TRUE,
   nblocks = Inf,
   stringsAsFactors = FALSE,
+  colClasses = NULL,
   select = NULL,
   drop = NULL,
   col.names = NULL,
@@ -41,6 +42,8 @@ arguments can be passed with \code{...}.}
 
 \item{stringsAsFactors}{Whether to convert strings into factors.}
 
+\item{colClasses}{Vector or list specifying the class of each field.}
+
 \item{select}{The columns (names or numbers) to be read.}
 
 \item{drop}{The columns (names or numbers) not to be read.}
@@ -63,7 +66,7 @@ each block is processed as soon as it is read from the disk.
 }
 \section{Slogan}{
 
-fdply: from \strong{f}ile to \strong{l}ist
+flply: from \strong{f}ile to \strong{l}ist
 }
 
 \examples{

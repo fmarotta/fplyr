@@ -10,6 +10,7 @@ fdply(
   key.sep = "\\t",
   sep = "\\t",
   skip = 0,
+  colClasses = NULL,
   header = TRUE,
   stringsAsFactors = FALSE,
   select = NULL,
@@ -28,6 +29,8 @@ fdply(
 \item{sep}{The field delimiter (often equal to \code{key.sep}).}
 
 \item{skip}{Number of lines to skip at the beginning of the file}
+
+\item{colClasses}{Vector or list specifying the class of each field.}
 
 \item{header}{Whether the file has a header.}
 
@@ -58,13 +61,3 @@ for the definitions of chunked file and block.
 fdply: from \strong{f}ile to \strong{d}ata.table
 }
 
-\examples{
-f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
-
-# Read only "setosa"
-dt <- fdply(f, nblocks = 1)
-
-# Read only "setosa" and "versicolor"
-dt <- fdply(f, 2)
-
-}

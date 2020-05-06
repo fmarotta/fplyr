@@ -15,6 +15,7 @@ fmply(
   header = TRUE,
   nblocks = Inf,
   stringsAsFactors = FALSE,
+  colClasses = NULL,
   select = NULL,
   drop = NULL,
   col.names = NULL,
@@ -46,6 +47,8 @@ it can return an additional element, which is also returned by \code{fmply()}.}
 \item{nblocks}{The number of blocks to read.}
 
 \item{stringsAsFactors}{Whether to convert strings into factors.}
+
+\item{colClasses}{Vector or list specifying the class of each field.}
 
 \item{select}{The columns (names or numbers) to be read.}
 
