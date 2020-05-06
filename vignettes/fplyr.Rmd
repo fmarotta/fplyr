@@ -9,6 +9,9 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  fig.width = 7,
+  fig.height = 4,
+  fig.align = "center",
   comment = "#>"
 )
 ```
@@ -19,9 +22,11 @@ library(fplyr)
 
 # fplyr `r utils::packageVersion("fplyr")`
 
+## Apply Functions to Blocks of Files
+
 ### `r Sys.Date()`
 
-After briefly describing the problem that `fplyr` tries to solve, this vignette will go throug all the functions in the package, explaining their usage. In order to make the most of this package, a certain degree of familiarity with the `data.table` package is suggested. Often, if one has trouble understanding an option, it will be possible to find detailed help in the manual of `data.table`'s fread() function.
+After briefly describing the problem that `fplyr` tries to solve, this vignette will go through all the functions in the package, explaining their usage. In order to make the most of this package, a certain degree of familiarity with the `data.table` package is suggested. Often, if one has trouble understanding an option, it will be possible to find detailed help in the manual of `data.table`'s fread() function. Futhermore, basic acquaintance with the *ply family of functions in R, especially lapply(), will also be helpful. You are encouraged to run the code of this vignette on your own and explore the output of the commands.
 
 ## Introduction
 
@@ -29,26 +34,204 @@ A very common operation when analysing data is that of splitting the observation
 
 `fplyr` combines the strengths of two other packages: `iotools` and `data.table`. While `iotools` has some functions, such as chunk.apply(), to apply a function to chunks of files, the chunks may not reflect the actual groups in which the data are partitioned. In particular, a 'chunk' may contain observations pertaining to several different groups, and the task of furtherly splitting them is left to the user. In `fplyr`, on the other hand, the further splitting is done automatically (thanks also to the `data.table` package), so the user needs not worry about it.
 
-Throughout this vignette we 
-
 ## Preconditions
 
-Before using `fplyr` you need to ensure that input file is in the correct format. First and foremost, the data must be amenable to the split-apply-combine paradigm, so the observations must be grouped according to the value of a certain field. We refer to the values of the  'groupby' field as the *subjects*. Thus, for instance, in the famous `iris` data set, each species would be a different subject. All the observations pertaining to the same subject constitute a *block*.
+Before using `fplyr` you need to ensure that the input file is in the correct format. First and foremost, the data must be amenable to the split-apply-combine paradigm, so the observations must be grouped according to the value of a certain field. We refer to the values of the  'groupby' field as the *subjects*. Thus, for instance, in the famous `iris` data set, each species would be a different subject. All the observations pertaining to the same subject constitute a *block*.
 
-In `fplyr` the input file must be formatted in such a way that the first field contains all the subject IDs. If the IDs are not in the first field, it won't work. Moreover, all the observations referring to the same subject must be consecutive; in other words, the file must be sorted on the first field, the reason being that the file is read block by block, so two observations that are very far apart in the file will not be read together and cannot be identified as belonging to the same block. Note that `fplyr` always ensures that all the rows with the same subject ID are read together in the same batch, but only if the rows are consecutive.
+In `fplyr` the input file must be formatted in such a way that the first field contains all the subject IDs. If the IDs are not in the first field, it won't work. Moreover, all the observations referring to the same subject must be consecutive; in other words, the file must be sorted on the first field, the reason being that the file is read block by block. Indeed, the subject ID of one line is compared with that of the previous line, and the reading goes on until the IDs are the same.^[Actually, it is a bit more complicated than that: the `iotools` package takes care of the reading, so the file is read chunk by chunk, not block by block, and then the chunk is split into its constituent blocks; you can read more about how `iotools` reads files in the help page of the chunk.reader() function.] Note that `fplyr` always ensures that all the rows with the same subject ID are read together in the same batch, but only if the rows are consecutive. To make sure that a file complies with these specifications, it is possible to use *nix command-line tools such as `awk` and `sort`.
 
-Typical files that can be processed by `fplyr` include those that can be reshaped in long or wide format.
+As an example file, in this vignette we will use a modified version of the `iris` dataset where the species has been relocated to the first column. This file is very small and would probably be accomodated even in the RAM of old hardware, so `fplyr` would not be necessary. Nevertheless, this file is attached to the package, meaning that it will be immediately available to all users, and despite its having only three blocks, it will still illustrate the most important features of `fplyr`. We begin by storing the path to this file into the variable `f`:
+
+```{r store_path}
+f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
+
+# Let's have a look at the first four lines of the file
+fread(f, nrows = 4)
+```
 
 ## flply
 
+Use flply() when you want to obtain a list where each element corresponds to a subject and contains the result of the processing of the corresponding block. In our examples, the output of flply() will contain three elements, one for each Iris species. The elements of the list will be conveniently named after the subject IDs.
 
+`fplyr` allows you to apply a function to each block of the file. For the sake of distinguishing the user-specified function to be applied to each block from other functions, we shall refer to it as `FUN`. In the first example we will obtain the summary() of each species. In general, all the functions in the package support two fundamental arguments: the path to the input file, and `FUN`.
+
+```{r flply_summary}
+species_summ <- flply(input = f, FUN = summary)
+
+# Now `species_summ` is a list of three elements; let's show the 'versicolor' element
+species_summ$versicolor
+```
+
+For flply(), `FUN` can be any function that takes as input a "data.frame"; summary() was just an example, but other appropriate functions are str(), as.matrix(), and so on. Of course, if you cannot find a function that does what you want, you can write your own `FUN`, as we shall see in the next example, where we'll perform hierarchical clustering within each species.^[Yes, I know this clustering is pointless, but the example is just meant to illustrate the kind of things that one can do, provided that he or she has access to more appropriate data sets.] Note that this is also how functions like lapply() work.
+
+```{r flply_hclust}
+clusters <- flply(f, FUN = function(d) {
+  dm <- dist(d[, -1]) # Compute the distance matrix, excluding the first field
+  hclust(dm) # Perform the clustering and return the object
+})
+
+# The `cluster` variable contains one "hclust" object for each species.
+# Let's plot the 'setosa' dendrogram
+plot(clusters$setosa)
+```
+
+If `FUN` takes more than one argument, it is possible to pass any additional argument directly to flply(): they will be passed, in turn, to `FUN`. For instance, suppose that we want to use kmeans() instead of hclust(), and we want to specify the number of centroids as an additional parameter. In the next example we will also define `FUN` as a separate function before using it, rather than writing an anonymous function like in the previous example. The output will be a "kmeans" object for each species.
+
+```{r flply_kmeans}
+kmeans_FUN <- function(d, my_centers) {
+  kmeans(d[, -1], centers = my_centers)
+}
+
+my_centers <- 2
+# We pass `my_centers` to flply(), and flply() passes it to kmeans_FUN
+clusters <- flply(f, FUN = kmeans_FUN, my_centers)
+# Let's display the centers of the 'setosa' clusters
+clusters$setosa$centers
+
+# Now let's do the same thing, but with three centers for each species
+my_centers <- 3
+clusters <- flply(f, FUN = kmeans_FUN, my_centers)
+clusters$setosa$centers
+```
+
+The last example of this section may be a bit surprising. Since, in R, `[[` is a function, nothing prevents us from using it as `FUN` to select only, say, the second column of each block. Admittedly, however, in this case it would be better to use the `select` option (see `?flply` and `?fread`, or wait for the [Other options](#options) subsection).
+
+```{r flply_select}
+sepal_length <- flply(f, `[[`, 2)
+
+# Now `sepal_length` contains all the sepal lengths, divided by species
+sepal_length
+```
 
 ### Naming convention
 
-We followed the same convention of `plyr`. The name of each function consist of two letters followed by 'ply': the first letter represent the type of input, whereas the second letter characterises the type of output, and the final 'ply' clinches the relation with the existing 'apply' family of functions. The first letter is usually 'f', because the input is the path to a file. The second letter is 'l' if the output is a list, as in flply(), it is 't' if the output is a "data.table", and so on.
+We followed the same convention of the `plyr` package. The name of each function consists of two letters followed by 'ply': the first letter represent the type of input, whereas the second letter characterises the type of output, and the final 'ply' clinches the relation with the existing 'apply' family of functions. The first letter is usually 'f', because the input is the path to a file. The second letter is 'l' if the output is a list, as in flply(), it is 't' if the output is a "data.table", 'f' if the output is another file, and 'm' if the output can be multiple things.
 
 ## ftply
 
+Use ftply() to return a "data.table"; the rows corresponding to the different subjects will be `rbind`ed together. Needless to say, in this case `FUN` must return a "data.frame" or a "data.table", while in flply() there was no such restriction. (When `fplyr` is loaded, the `data.table` package is loaded as well.) Moreover, in this case `FUN` has to take at least two arguments: the first one being a "data.table" corresponding to the current block being processed, and the second one being a character vector containing the subject ID. This is best explained with an example:
+
+```{r ftply_by}
+selected_flowers <- ftply(f, function(d, by) {
+  if (by == "setosa")
+    return(NULL)
+  else
+    return(d)
+})
+
+# Let's have a look at the first few lines of the output; note that it start directly with 'versicolor', because all the 'setosa' flowers have been omitted
+head(selected_flowers, 4)
+```
+
+Here, we are skipping the 'setosa' species. The result will be equal to the input, except that the rows corresponding to the setosa flowers will be omitted. Notice also that `fplyr` warns us that one block didn't return any output. In general, the behaviour of ftply() is equivalent to flply() followed by `rbind`ing the resulting lists.
+
+Importantly, the `d` argument to `FUN` contains a "data.table" of the current block being processed, but *without the first field*. This is just for efficiency concerns; the first field will be added back to the output of `FUN`. In fact, the following example will show that inside `FUN` the `d` data set has only four columns, whereas normally it would have five.
+
+```{r ftply_firstfield}
+count_cols <- function(d, by) {
+  ncol(d)
+}
+ftply(f, count_cols)
+```
+
+### The `nblocks` option
+
+ftply() can also be used to quickly glance at the data, much like one would use the head() function. Indeed, we can specify the `nblocks` option to select only the first block; thus, we can see what the data look like without loading the whole file into memory. By default, in ftply() `FUN` returns the data without modifying them, so in this case we can avoid specifying `FUN`. Incidentally, all the other functions support the `nblocks` option as well; it is intended to be the analogous of `nrows` in read.table() and fread().
+
+```{r ftply_head}
+flowers_head <- ftply(f, nblocks = 1)
+
+# Now `flowers_head` has 50 observations, while the original data set had 150. Let's have a look at the first ones.
+head(flowers_head, 4)
+```
+
+### Parallelisation
+
+Another useful option is `parallel`, with which it is possible to specify the number of threads that `fplyr` can use. Like `nblocks`, also the `parallel` option is supported by all the functions. It is not necessary to initialise any cluster. In the following example we will select, for each block, a random sample of 10 observations.
+
+```{r ftply_parallel}
+result <- ftply(f, parallel = 3, FUN = function(d, by) {
+  d[sample(1:nrow(d), 10), ]
+})
+
+# Let's check that the output has 30 rows (10 for each species)
+nrow(result)
+```
+
 ## ffply
 
+This package was born to deal with files that are too big to fit into the available RAM. With `fplyr`, it is easy to process such files, but what if even the output of the processing is too big for the memory? One solution could be to write the output to a file as soon as it is generated, without ever returning it. This solution is implemented in the ffply() function, but it works only if `FUN` returns a "data.table" or "data.frame". It is equivalent to calling ftply() followed by write.table() or fread(). This function supports one additional argument with respect to the previously described functions: the path to the output file. In the example, we will replace the original observations with their principal components, block by block.
+
+```{r ffply}
+out <- tempfile() # Create temporary output file
+ffply(f, out, function(d, by) {
+  # Here, `d` does not contain the subject IDs; they will be automatically added back later
+  x <- prcomp(d)$x
+  as.data.table(x)
+})
+
+# Let's check the result. Note in particular that the subject IDs are present
+fread(out, nrows = 4)
+```
+
+For ffply(), `FUN` must take two arguments, like in ftply(). The return value of ffply() is the number of processed blocks.
+
+### Other options {#options}
+
+Besides the options we have already discussed, such as `nblocks` and `parallel`, all the functions in the package support a set of core options that modify how the file is read. These options are as follows.
+
+* `key.sep` The character that delimits the first field from the rest [default: "\\t"].
+* `sep`	The field delimiter (often equal to key.sep) [default: "\\t"].
+* `skip` Number of lines to skip at the beginning of the file [default: 0].
+* `header` Whether the file has a header [default: TRUE].
+* `nblocks` The number of blocks to read [default: Inf].
+* `stringsAsFactors` Whether to convert strings into factors [default: FALSE].
+* `colClasses` Vector or list specifying the class of each field [default: NULL].
+* `select` The columns (names or numbers) to be read [default: NULL].
+* `drop` The columns (names or numbers) not to be read [default: NULL].
+* `col.names` Names of the columns [default: NULL].
+
+With the exception of `key.sep`, all these options are comprehensively documented in the help page of `data.table`'s fread() function (`?fread`). For `key.sep`, see the help page of `iotools`' read.chunk() (`?read.chunk`).
+
 ## fmply
+
+For the last function, suppose that the analysis of each block produces several output files; for instance, we may want to compute the principal components as well as a nonlinear transformation of the variables, for each block, and save them to two separate output files. In this case, we can use fmply(). Like ftply(), it too supports the `output` option, but this time it can be a vector of many paths. Accordingly, `FUN` should now return a list of "data.table"s, one for each of the output files.
+
+```{r fmply_paths}
+out <- c(pca = tempfile(), transf = tempfile())
+# Note that the vector needs not be named, we use these names just for convenience
+
+analyse_block <- function(d) {
+  # Here, `d` does contain the subject IDs, so we have to remove them...
+  x <- prcomp(d[, -1])$x
+  # ...and add them back manually
+  x <- cbind(d[, 1], x)
+  # Transform each number 'z' into e^(-z)
+  y <- cbind(d[, 1], exp(-d[, -1]))
+  # Return a list of two "data.table"s
+  list(x, y)
+}
+
+fmply(f, out, analyse_block)
+```
+
+Notice that, contrary to ffply(), `FUN` takes only one argument, and it is the full block, including the first field. Therefore, we had to remove this field when we computed the principal components, and add it back at the end. (In ffply() and ftply() this is done automatically.) Moreover, `FUN` should now return two values, the first of which is printed to the first output file, and the second of which is printed to the second output file. There is no limit to the number of output files, but the order of the output files and of the values returned by `FUN` must match (named vectors and lists are not taken into account at the moment).
+
+Sometimes it is also necessary to return objects that are not printable as "data.table"s. For instance, suppose that, besides printing the principal components to the output file, we also wanted to return the `"prcomp"` object. In these cases, fmply() is still helpful, because it allows `FUN` to return one more element, which in turn will be returned by fmply(). For example, consider the following modification of analyse_block():
+
+```{r fmply_list}
+analyse_block2 <- function(d) {
+  pca <- prcomp(d[, -1])
+  x <- cbind(d[, 1], pca$x)
+  y <- cbind(d[, 1], exp(-d[, -1]))
+  # 'x' and 'y' are the same as before, but now we add the 'pca' object
+  list(x, y, pca)
+}
+
+iris_pca <- fmply(f, out, analyse_block2)
+
+# Let's have a look at the screeplot of the 'versicolor' PCA
+screeplot(iris_pca$versicolor)
+```
+
+Here, `FUN` returns three arguments, but there are only two output files. The third value returned by `FUN`, then, is returned at the end by fmply(). In particular, the variable `iris_pca` will be a list of three `"prcomp"` objects, one for each species.
