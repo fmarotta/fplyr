@@ -1,7 +1,7 @@
 # fplyr 1.2.0
 
 * Introduce `ftply()`, to return the output as a `"data.table"`
-* Deprecate `fdply()` in favour of `ftply()`
+* Deprecate `fdply()` in favor of `ftply()`
 * Add a vignette
 * Refurbish the tests
 * Add some benchmarks
