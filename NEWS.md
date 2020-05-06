@@ -1,10 +1,13 @@
 # current developments
 
-* Add vignette
+* Deprecate `fdply()` in favour of `ftply()`
+* Add a vignette
+* Refurbish the tests
+* Add some benchmarks
 * Fix typos in the docs
-* Allow blocks to be `long`
+* Allow blocks to be `long` vectors
 * Introduce `ftply()`, to return the output as a `data.table`
-* Support colClasses
+* Support the `colClasses` option
 
 # fplyr 1.1.0
 
