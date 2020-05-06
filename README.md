@@ -44,3 +44,26 @@ mean of the fourth column for a single block.
 ```
 l <- flply(f, function(d) mean(d$V4))
 ```
+
+## Installation
+
+1. The package is on CRAN and it can be installed from there. Start R and enter:
+
+```
+install.packages("fplyr")
+```
+
+2. The development version can be installed from GitHub with `devtools` (but do it at your own risk). Start R and enter:
+
+```
+if (!requireNamespace("devtools", quietly = TRUE))
+    install.packages("devtools")
+
+devtools::install_github("fmarotta/fplyr", ref = "devel")
+```
+
+3. To install an old release, browse to [](https://github.com/fmarotta/fplyr/releases), and download the "tar.gz" of the required version; then from the command line enter:
+
+```
+R CMD INSTALL fplyr-x.y.z.tar.gz
+```
