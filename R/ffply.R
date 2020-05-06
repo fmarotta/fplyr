@@ -48,7 +48,7 @@ ffply <- function(input, output = "", FUN, ...,
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
 	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
-    on.exit(close(input))
+    # on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
         warning("parallel > 1 is not supported on non-unix systems")
@@ -161,5 +161,6 @@ ffply <- function(input, output = "", FUN, ...,
             }
         }
     }
+    close(input)
     invisible(i)
 }

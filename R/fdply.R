@@ -26,22 +26,14 @@
 #' @section Slogan:
 #' fdply: from \strong{f}ile to \strong{d}ata.table
 #'
-#' @examples
-#' f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
-#'
-#' # Read only "setosa"
-#' dt <- fdply(f, nblocks = 1)
-#'
-#' # Read only "setosa" and "versicolor"
-#' dt <- fdply(f, 2)
-#'
 #' @export
 fdply <- function(input, nblocks = 1, key.sep = "\t", sep = "\t", skip = 0,
 				  colClasses = NULL, header = TRUE, stringsAsFactors = FALSE,
                   select = NULL, drop = NULL, col.names = NULL,
                   parallel = 1) {
+    .Deprecated("ftply")
     l <- flply(input, function(d) d, key.sep = key.sep, sep = sep, skip = skip, header = header,
-			   nblocks = nblocks, colClasses = colClasses, 
+			   nblocks = nblocks, colClasses = colClasses,
 			   stringsAsFactors = stringsAsFactors,
                select = select, drop = drop, col.names = col.names,
                parallel = parallel)

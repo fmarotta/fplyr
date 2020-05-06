@@ -1,12 +1,12 @@
 #' Read, process each block and return a data.table
 #'
-#' \code{ftply} takes as input the path to a file and a function, and 
-#' returns a \code{data.table}. It is a faster equivalent to using 
+#' \code{ftply} takes as input the path to a file and a function, and
+#' returns a \code{data.table}. It is a faster equivalent to using
 #' \code{l <- flply(...)} followed by \code{do.call(rbind, l)}.
 #'
-#' \code{ftply} is similar to \code{ffply}, but while the latter writes 
-#' to disk the result of the processing after each block, the former 
-#' keeps the result in memory until all the file has been processed, and 
+#' \code{ftply} is similar to \code{ffply}, but while the latter writes
+#' to disk the result of the processing after each block, the former
+#' keeps the result in memory until all the file has been processed, and
 #' then returns the complete \code{data.table}.
 #'
 #' @inheritParams flply
@@ -15,7 +15,7 @@
 #'     the first field}; the second argument is a character vector containing the
 #'     value of the first field for the current block.
 #'
-#' @return Returns a \code{data.table} with the results of the 
+#' @return Returns a \code{data.table} with the results of the
 #' processing.
 #'
 #' @section Slogan:
@@ -27,8 +27,11 @@
 #' # Compute the mean of the columns for each species
 #' ftply(f1, function(d, by) d[, lapply(.SD, mean)])
 #'
+#' # Read only the first two blocks
+#' ftply(f1, nblocks = 2)
+#'
 #' @export
-ftply <- function(input, FUN, ...,
+ftply <- function(input, FUN = function(d, by) d, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
 				  nblocks = Inf, stringsAsFactors = FALSE, colClasses = NULL,
                   select = NULL, drop = NULL, col.names = NULL,
@@ -38,7 +41,7 @@ ftply <- function(input, FUN, ...,
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
 	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
-    on.exit(close(input))
+    # on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
         warning("parallel > 1 is not supported on non-unix systems")
@@ -130,5 +133,6 @@ ftply <- function(input, FUN, ...,
             }
         }
     }
+    close(input)
     dt
 }

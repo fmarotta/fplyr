@@ -7,7 +7,18 @@
 #' to \code{by()}, except that it does not read the whole file into memory, but
 #' each block is processed as soon as it is read from the disk.
 #'
-#' @inheritParams fdply
+#' @param input Path of the input file.
+#' @param key.sep The character that delimits the first field from the rest.
+#' @param sep The field delimiter (often equal to \code{key.sep}).
+#' @param skip Number of lines to skip at the beginning of the file
+#' @param header Whether the file has a header.
+#' @param nblocks The number of blocks to read.
+#' @param stringsAsFactors Whether to convert strings into factors.
+#' @param colClasses Vector or list specifying the class of each field.
+#' @param select The columns (names or numbers) to be read.
+#' @param drop The columns (names or numbers) not to be read.
+#' @param col.names Names of the columns.
+#' @param parallel Number of cores to use.
 #' @param FUN A function to be applied to each block. The first argument to the
 #'     function must be a \code{data.table} containing the current block. Additional
 #'     arguments can be passed with \code{...}.
@@ -44,7 +55,7 @@ flply <- function(input, FUN, ...,
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
 	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
-    on.exit(close(input))
+    # on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
         warning("parallel > 1is not supported on non-unix systems")
@@ -95,6 +106,7 @@ flply <- function(input, FUN, ...,
             }
         }
     }
+    close(input)
     res
 }
 
