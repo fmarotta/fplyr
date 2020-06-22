@@ -1,3 +1,9 @@
+# fplyr 1.2.1
+
+* Remove annoying warning about unused connection
+* Add reference to the arXiv paper in `citation("fplyr")`
+* Let `fmply()` return invisibly if otherwise the output would be an empty list
+
 # fplyr 1.2.0
 
 * Introduce `ftply()`, to return the output as a `"data.table"`
