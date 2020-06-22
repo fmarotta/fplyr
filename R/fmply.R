@@ -166,5 +166,8 @@ fmply <- function(input, outputs, FUN, ...,
         }
     }
     close(input)
-    res
+    if (length(res))
+        res
+    else
+        invisible(i)
 }
