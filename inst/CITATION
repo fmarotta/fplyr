@@ -1,0 +1,10 @@
+bibentry(
+    header = "To cite fplyr in publications, please use:",
+    bibtype = "article",
+    title = "fplyr: the split-apply-combine strategy for
+big data in R",
+    journal = "arXiv preprint",
+    author = person("Federico", "Marotta"),
+    year = 2020,
+    url = "https://arxiv.org/abs/2005.04711"
+)
