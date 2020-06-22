@@ -2,23 +2,32 @@ OpenInput <- function(input, skip) {
     # Open the connections. The input must be binary, so that chunk.reader is
     # happy; the output is handled by data.table's fwrite.
     if (missing(input))
-        stop("input file cannot be empty.")
+        stop("Input file cannot be empty.")
 
     if (is.character(input)) {
-        filetype = summary( file(input) )$class
-        if (filetype == "gzfile")
-            input = gzcon(file(input, "rb"))
+        conn <- file(input)
+        filetype <- summary(conn)$class
+        close(conn)
+        if (filetype == "file")
+            conn <- file(input, "rb")
+        else if (filetype == "gzfile")
+            conn <- gzfile(input, "rb")
+        else if (grepl("^url.*", filetype))
+            conn <- url(input, "rb")
+        else if (filetype == "bzfile")
+            conn <- bzfile(input, "rb")
+        else if (filetype == "xzfile")
+            conn <- xzfile(input, "rb")
         else
-            input = file(input, "rb")
-        # on.exit(close(input))
+            stop("The type of the input file could not be determined")
     }
 
     # Skip the specified lines. We do this before reading the header to
     # comply with fread's behaviour.
     if (skip > 0L)
-        readLines(input, n = skip)
+        readLines(conn, n = skip)
 
-    input
+    conn
 }
 
 GetHeader <- function(input, col.names, header, sep) {
