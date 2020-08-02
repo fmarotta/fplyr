@@ -1,3 +1,8 @@
+# fplyr 1.2.2
+
+* Do not limit the size of each block to 2^31B, but let it be virtually
+  unlimited
+
 # fplyr 1.2.1
 
 * Remove annoying warning about unused connection
