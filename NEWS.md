@@ -1,7 +1,6 @@
 # fplyr 1.2.2
 
-* Do not limit the size of each block to 2^31B, but let it be virtually
-  unlimited
+* Do not limit the size of a block to 2^31B, but let it be virtually unlimited
 
 # fplyr 1.2.1
 

@@ -51,7 +51,7 @@ test_that("dtstrsplit works", {
                                            head = col.names,
                                            select = NULL,
                                            drop = NULL,
-                                           max_length = 3)
+                                           max_length = 80)
     expect_identical(
         crippled_dtstrsplit(iotools::readAsRaw(file)),
         fread(file, header = F, col.names = col.names)
