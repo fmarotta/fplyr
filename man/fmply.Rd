@@ -60,7 +60,7 @@ it can return an additional element, which is also returned by \code{fmply()}.}
 }
 \value{
 If \code{FUN} returns \emph{m} elements, \code{fmply()} returns
-invisibly the number of blocks parsed. If \code{FUN} returns \emph{m + 1}
+NULL invisibly. If \code{FUN} returns \emph{m + 1}
 elements, \code{fmply()} returns the list of all the last elements. As a
 side effect, it writes the first \emph{m} outputs of \code{FUN} to the
 \code{outputs} files.

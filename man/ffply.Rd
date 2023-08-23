@@ -57,7 +57,7 @@ value of the first field for the current block.}
 \item{parallel}{Number of cores to use.}
 }
 \value{
-Returns the number of chunks that were processed. As a side effect,
+Returns NULL invisibly. As a side effect,
 writes the processed \code{data.table} to the output file.
 }
 \description{
