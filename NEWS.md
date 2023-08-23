@@ -1,6 +1,9 @@
-# fplyr 1.2.2
+# fplyr 1.3.0
 
 * Do not limit the size of a block to 2^31B, but let it be virtually unlimited
+* Use the new way of documenting fplyr-package (see [r-lib/roxygen2#1491](https://github.com/r-lib/roxygen2/issues/1491))
+* Use a faster implementation if `nblocks` is not used
+* ffply() and fmply() return NULL invisibly rather than the number of blocks processed
 
 # fplyr 1.2.1
 

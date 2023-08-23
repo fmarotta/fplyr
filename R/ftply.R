@@ -52,29 +52,46 @@ ftply <- function(input, FUN = function(d, by) d, ...,
     cr <- iotools::chunk.reader(input, sep = key.sep)
 
     # Parse the file
-    i <- 0 # keep track of the number of blocks parsed
     fc <- head[1] # first column
     dt <- data.table() # return value
     if (parallel == 1) {
-        while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
-            d <- dtstrsplit(r)
-            u <- unique(d[[1]])
-            d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]][, FUN(.SD, .BY, ...), by = eval(fc)]
-            if (is.null(d) || nrow(d) == 0) {
-                for (k in 1:length(u))
-                    if (i + k <= nblocks)
-                        warning(paste0("Block ", i + k, " returned an empty data.table."))
+        if (nblocks < Inf) {
+            i <- 0
+            while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
+                d <- dtstrsplit(r)
+                u <- unique(d[[1]])
+                d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]][, FUN(.SD, .BY, ...), by = eval(fc)]
+                if (is.null(d) || nrow(d) == 0) {
+                    for (k in 1:length(u))
+                        if (i + k <= nblocks)
+                            warning(paste0("Block ", i + k, " returned an empty data.table."))
+                    i <- i + min(nblocks - i, length(u))
+                    next()
+                }
+                v <- unique(d[[1]])
+                if (length(v) != length(u)) {
+                    for (k in which(! u %in% v))
+                        if (i + k <= nblocks)
+                            warning(paste0("Block ", i + k, " returned an empty data.table."))
+                }
+                dt <- rbind(dt, d)
                 i <- i + min(nblocks - i, length(u))
-                next()
             }
-            v <- unique(d[[1]])
-            if (length(v) != length(u)) {
-                for (k in which(! u %in% v))
-                    if (i + k <= nblocks)
-                        warning(paste0("Block ", i + k, " returned an empty data.table."))
+        } else {
+            while (length(r <- iotools::read.chunk(cr))) {
+                d <- dtstrsplit(r)
+                u <- unique(d[[1]])
+                d <- d[, FUN(.SD, .BY, ...), by = eval(fc)]
+                v <- unique(d[[1]])
+                failed_blocks <- setdiff(u, v)
+                for (k in failed_blocks) {
+                    warning("Block ", k, " returned an empty data.table.")
+                }
+                if (is.null(d) || nrow(d) == 0) {
+                    next()
+                }
+                dt <- rbind(dt, d)
             }
-            dt <- rbind(dt, d)
-            i <- i + min(nblocks - i, length(u))
         }
     } else {
         worker_queue = list()
@@ -98,38 +115,69 @@ ftply <- function(input, FUN = function(d, by) d, ...,
             return(NULL)
         if (length(r) > 0)
             r <- iotools::read.chunk(cr)
-        while (i < nblocks && length(worker_queue)) {
-            w <- parallel::mccollect(worker_queue[[1]])[[1]]
-            if (is.null(w$d) || nrow(w$d) == 0) {
-                for (k in 1:length(w$u))
-                    if (i + k <= nblocks)
-                        warning(paste0("Block ", i + k, " returned an empty data.table."))
+        if (nblocks < Inf) {
+            i <- 0
+            while (i < nblocks && length(worker_queue)) {
+                w <- parallel::mccollect(worker_queue[[1]])[[1]]
+                worker_queue[1] = NULL
+                if (is.null(w$d) || nrow(w$d) == 0) {
+                    for (k in 1:length(w$u))
+                        if (i + k <= nblocks)
+                            warning(paste0("Block ", i + k, " returned an empty data.table."))
+                    i <- i + min(nblocks - i, length(w$u))
+                    next()
+                }
+                w$d <- w$d[w$d[[1]] %in% w$u[1:(min(nblocks - i, length(w$u)))]]
+                if (length(w$v) != length(w$u)) {
+                    for (k in which(! w$u %in% w$v))
+                        if (i + k <= nblocks)
+                            warning(paste0("Block ", i + k, " returned an empty data.table."))
+                }
+                dt <- rbind(dt, w$d)
                 i <- i + min(nblocks - i, length(w$u))
-                next()
-            }
-            w$d <- w$d[w$d[[1]] %in% w$u[1:(min(nblocks - i, length(w$u)))]]
-            if (length(w$v) != length(w$u)) {
-                for (k in which(! w$u %in% w$v))
-                    if (i + k <= nblocks)
-                        warning(paste0("Block ", i + k, " returned an empty data.table."))
-            }
-            dt <- rbind(dt, w$d)
-            worker_queue[1] = NULL
-            i <- i + min(nblocks - i, length(w$u))
 
-            if (length(r) > 0) {
-                worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
-                    d <- dtstrsplit(r)
-                    u <- unique(d[[1]])
-                    d <- d[, FUN(.SD, .BY, ...), by = eval(fc)]
-                    if (is.data.table(d) && nrow(d) > 0) {
-                        v <- unique(d[[1]])
-                        list(d = d, u = u, v = v)
-                    } else {
-                        list(d = NULL, u = u, v = NULL)
-                    }
-                })
-                r <- iotools::read.chunk(cr)
+                if (length(r) > 0) {
+                    worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
+                        d <- dtstrsplit(r)
+                        u <- unique(d[[1]])
+                        d <- d[, FUN(.SD, .BY, ...), by = eval(fc)]
+                        if (is.data.table(d) && nrow(d) > 0) {
+                            v <- unique(d[[1]])
+                            list(d = d, u = u, v = v)
+                        } else {
+                            list(d = NULL, u = u, v = NULL)
+                        }
+                    })
+                    r <- iotools::read.chunk(cr)
+                }
+            }
+        } else {
+            while (length(worker_queue)) {
+                w <- parallel::mccollect(worker_queue[[1]])[[1]]
+                worker_queue[1] = NULL
+                failed_blocks <- setdiff(w$u, w$v)
+                for (k in failed_blocks) {
+                    warning("Block ", k, " returned an empty data.table.")
+                }
+                if (is.null(w$d) || nrow(w$d) == 0) {
+                    next()
+                }
+                dt <- rbind(dt, w$d)
+
+                if (length(r) > 0) {
+                    worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
+                        d <- dtstrsplit(r)
+                        u <- unique(d[[1]])
+                        d <- d[, FUN(.SD, .BY, ...), by = eval(fc)]
+                        if (is.data.table(d) && nrow(d) > 0) {
+                            v <- unique(d[[1]])
+                            list(d = d, u = u, v = v)
+                        } else {
+                            list(d = NULL, u = u, v = NULL)
+                        }
+                    })
+                    r <- iotools::read.chunk(cr)
+                }
             }
         }
     }

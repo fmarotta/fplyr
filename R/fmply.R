@@ -17,7 +17,7 @@
 #'     it can return an additional element, which is also returned by \code{fmply()}.
 #'
 #' @return If \code{FUN} returns \emph{m} elements, \code{fmply()} returns
-#' invisibly the number of blocks parsed. If \code{FUN} returns \emph{m + 1}
+#' NULL invisibly. If \code{FUN} returns \emph{m + 1}
 #' elements, \code{fmply()} returns the list of all the last elements. As a
 #' side effect, it writes the first \emph{m} outputs of \code{FUN} to the
 #' \code{outputs} files.
@@ -60,7 +60,6 @@ fmply <- function(input, outputs, FUN, ...,
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
 	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
-    # on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
         warning("parallel > 1 is not supported on non-unix systems")
@@ -71,42 +70,78 @@ fmply <- function(input, outputs, FUN, ...,
     cr <- iotools::chunk.reader(input, sep = key.sep)
 
     # Parse the file
-    i <- 0
     res <- list()
     if (parallel == 1) {
-        while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
-            d <- dtstrsplit(r)
-            u <- unique(d[[1]])
-            d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]]
-            l <- by(d, d[, 1], FUN, ...)
-            m <- lapply(seq_along(outputs), function(j) {
-                rbindlist(lapply(l, "[[", j))
-            })
-            if (length(l[[1]]) > length(outputs)) {
-                n <- lapply(l, "[[", length(l[[1]]))
-                res <- append(res, n)
-            }
-            if (i == 0) {
-                lapply(seq_along(outputs), function(j) {
-                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
-                        return()
-                    if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
-                        fwrite(m[[j]], file = outputs[j], col.names = FALSE,
-                                           sep = sep, quote = FALSE)
-                    } else {
-                        fwrite(m[[j]], file = outputs[j], col.names = TRUE,
-                                           sep = sep, quote = FALSE)
-                    }
+        if (nblocks < Inf) {
+            i <- 0
+            while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
+                d <- dtstrsplit(r)
+                u <- unique(d[[1]])
+                d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]]
+                l <- by(d, d[, 1], FUN, ...)
+                m <- lapply(seq_along(outputs), function(j) {
+                    rbindlist(lapply(l, "[[", j))
                 })
-            } else {
-                lapply(seq_along(outputs), function(j) {
-                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
-                        return()
-                    fwrite(m[[j]], file = outputs[j], append = TRUE,
-                                       sep = sep, quote = FALSE, col.names = FALSE)
-                })
+                if (length(l[[1]]) > length(outputs)) {
+                    n <- lapply(l, "[[", length(l[[1]]))
+                    res <- append(res, n)
+                }
+                if (i == 0) {
+                    lapply(seq_along(outputs), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
+                            fwrite(m[[j]], file = outputs[j], col.names = FALSE,
+                                               sep = sep, quote = FALSE)
+                        } else {
+                            fwrite(m[[j]], file = outputs[j], col.names = TRUE,
+                                               sep = sep, quote = FALSE)
+                        }
+                    })
+                } else {
+                    lapply(seq_along(outputs), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        fwrite(m[[j]], file = outputs[j], append = TRUE,
+                                           sep = sep, quote = FALSE, col.names = FALSE)
+                    })
+                }
+                i <- i + length(l)
             }
-            i <- i + length(l)
+        } else {
+            header_printed <- FALSE
+            while (length(r <- iotools::read.chunk(cr))) {
+                d <- dtstrsplit(r)
+                l <- by(d, d[, 1], FUN, ...)
+                m <- lapply(seq_along(outputs), function(j) {
+                    rbindlist(lapply(l, "[[", j))
+                })
+                if (length(l[[1]]) > length(outputs)) {
+                    n <- lapply(l, "[[", length(l[[1]]))
+                    res <- append(res, n)
+                }
+                if (!header_printed) {
+                    lapply(seq_along(outputs), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
+                            fwrite(m[[j]], file = outputs[j], col.names = FALSE,
+                                   sep = sep, quote = FALSE)
+                        } else {
+                            fwrite(m[[j]], file = outputs[j], col.names = TRUE,
+                                   sep = sep, quote = FALSE)
+                        }
+                    })
+                    header_printed <- TRUE
+                } else {
+                    lapply(seq_along(outputs), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        fwrite(m[[j]], file = outputs[j], append = TRUE,
+                               sep = sep, quote = FALSE, col.names = FALSE)
+                    })
+                }
+            }
         }
     } else {
         worker_queue = list()
@@ -123,45 +158,90 @@ fmply <- function(input, outputs, FUN, ...,
             return(NULL)
         if (length(r) > 0)
             r <- iotools::read.chunk(cr)
-        while (i < nblocks && length(worker_queue)) {
-            l <- parallel::mccollect(worker_queue[[1]])[[1]]
-            l <- l[1:(min(nblocks - i, length(l)))]
-            m <- lapply(seq_along(outputs), function(j) {
-                rbindlist(lapply(l, "[[", j))
-            })
-            if (length(l[[1]]) > length(outputs)) {
-                n <- lapply(l, "[[", length(l[[1]]))
-                res <- append(res, n)
-            }
-            if (i == 0) {
-                lapply(seq_along(m), function(j) {
-                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
-                        return()
-                    if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
-                        fwrite(m[[j]], file = outputs[j], col.names = FALSE,
-                                           sep = sep, quote = FALSE)
-                    } else {
-                        fwrite(m[[j]], file = outputs[j], col.names = TRUE,
-                                           sep = sep, quote = FALSE)
-                    }
+        if (nblocks < Inf) {
+            i <- 0
+            while (i < nblocks && length(worker_queue)) {
+                l <- parallel::mccollect(worker_queue[[1]])[[1]]
+                worker_queue[1] = NULL
+                l <- l[1:(min(nblocks - i, length(l)))]
+                m <- lapply(seq_along(outputs), function(j) {
+                    rbindlist(lapply(l, "[[", j))
                 })
-            } else {
-                lapply(seq_along(m), function(j) {
-                    if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
-                        return()
-                    fwrite(m[[j]], file = outputs[j], append = TRUE,
-                           sep = sep, quote = FALSE, col.names = FALSE)
-                })
-            }
-            worker_queue[1] = NULL
-            i <- i + length(l)
+                if (length(l[[1]]) > length(outputs)) {
+                    n <- lapply(l, "[[", length(l[[1]]))
+                    res <- append(res, n)
+                }
+                if (i == 0) {
+                    lapply(seq_along(m), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
+                            fwrite(m[[j]], file = outputs[j], col.names = FALSE,
+                                               sep = sep, quote = FALSE)
+                        } else {
+                            fwrite(m[[j]], file = outputs[j], col.names = TRUE,
+                                               sep = sep, quote = FALSE)
+                        }
+                    })
+                } else {
+                    lapply(seq_along(m), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        fwrite(m[[j]], file = outputs[j], append = TRUE,
+                               sep = sep, quote = FALSE, col.names = FALSE)
+                    })
+                }
+                i <- i + length(l)
 
-            if (length(r) > 0) {
-                worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
-                    d <- dtstrsplit(r);
-                    by(d, d[, 1], FUN, ...)
+                if (length(r) > 0) {
+                    worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
+                        d <- dtstrsplit(r);
+                        by(d, d[, 1], FUN, ...)
+                    })
+                    r <- iotools::read.chunk(cr)
+                }
+            }
+        } else {
+            header_printed <- FALSE
+            while (length(worker_queue)) {
+                l <- parallel::mccollect(worker_queue[[1]])[[1]]
+                worker_queue[1] = NULL
+                m <- lapply(seq_along(outputs), function(j) {
+                    rbindlist(lapply(l, "[[", j))
                 })
-                r <- iotools::read.chunk(cr)
+                if (length(l[[1]]) > length(outputs)) {
+                    n <- lapply(l, "[[", length(l[[1]]))
+                    res <- append(res, n)
+                }
+                if (!header_printed) {
+                    lapply(seq_along(m), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        if (all(names(m[[j]]) == paste0("V", 1:length(m[[j]])))) {
+                            fwrite(m[[j]], file = outputs[j], col.names = FALSE,
+                                   sep = sep, quote = FALSE)
+                        } else {
+                            fwrite(m[[j]], file = outputs[j], col.names = TRUE,
+                                   sep = sep, quote = FALSE)
+                        }
+                    })
+                    header_printed <- TRUE
+                } else {
+                    lapply(seq_along(m), function(j) {
+                        if (is.null(m[[j]]) || ncol(m[[j]]) == 0L)
+                            return()
+                        fwrite(m[[j]], file = outputs[j], append = TRUE,
+                               sep = sep, quote = FALSE, col.names = FALSE)
+                    })
+                }
+
+                if (length(r) > 0) {
+                    worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
+                        d <- dtstrsplit(r);
+                        by(d, d[, 1], FUN, ...)
+                    })
+                    r <- iotools::read.chunk(cr)
+                }
             }
         }
     }
@@ -169,5 +249,5 @@ fmply <- function(input, outputs, FUN, ...,
     if (length(res))
         res
     else
-        invisible(i)
+        invisible(NULL)
 }

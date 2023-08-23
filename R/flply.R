@@ -55,7 +55,6 @@ flply <- function(input, FUN, ...,
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
 	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
-    # on.exit(close(input))
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
         warning("parallel > 1is not supported on non-unix systems")
@@ -65,16 +64,24 @@ flply <- function(input, FUN, ...,
     # Initialise the reader.
     cr <- iotools::chunk.reader(input, sep = key.sep)
     # Parse the file
-    i <- 0
     res <- list()
     if (parallel == 1) {
-        while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
-            d <- dtstrsplit(r)
-            u <- unique(d[[1]])
-            d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]]
-            l <- by(d, d[, 1], FUN, ...)
-            i <- i + length(l)
-            res <- append(res, l)
+        if (nblocks < Inf) {
+            i <- 0
+            while (i < nblocks && length(r <- iotools::read.chunk(cr))) {
+                d <- dtstrsplit(r)
+                u <- unique(d[[1]])
+                d <- d[d[[1]] %in% u[1:(min(nblocks - i, length(u)))]]
+                l <- by(d, d[, 1], FUN, ...)
+                i <- i + length(l)
+                res <- append(res, l)
+            }
+        } else {
+            while (length(r <- iotools::read.chunk(cr))) {
+                d <- dtstrsplit(r)
+                l <- by(d, d[, 1], FUN, ...)
+                res <- append(res, l)
+            }
         }
     } else {
         worker_queue = list()
@@ -91,18 +98,34 @@ flply <- function(input, FUN, ...,
             return(NULL)
         if (length(r) > 0)
             r <- iotools::read.chunk(cr)
-        while (i < nblocks && length(worker_queue)) {
-            l <- parallel::mccollect(worker_queue[[1]])[[1]]
-            l <- l[1:(min(nblocks - i, length(l)))]
-            i <- i + length(l)
-            res <- append(res, l)
-            worker_queue[1] = NULL
-            if (length(r) > 0) {
-                worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
-                    d <- dtstrsplit(r);
-                    by(d, d[, 1], FUN, ...)
-                })
-                r <- iotools::read.chunk(cr)
+        if (nblocks < Inf) {
+            i <- 0
+            while (i < nblocks && length(worker_queue)) {
+                l <- parallel::mccollect(worker_queue[[1]])[[1]]
+                l <- l[1:(min(nblocks - i, length(l)))]
+                i <- i + length(l)
+                res <- append(res, l)
+                worker_queue[1] = NULL
+                if (length(r) > 0) {
+                    worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
+                        d <- dtstrsplit(r);
+                        by(d, d[, 1], FUN, ...)
+                    })
+                    r <- iotools::read.chunk(cr)
+                }
+            }
+        } else {
+            while (length(worker_queue)) {
+                l <- parallel::mccollect(worker_queue[[1]])[[1]]
+                res <- append(res, l)
+                worker_queue[1] = NULL
+                if (length(r) > 0) {
+                    worker_queue[[length(worker_queue) + 1]] <- parallel::mcparallel({
+                        d <- dtstrsplit(r);
+                        by(d, d[, 1], FUN, ...)
+                    })
+                    r <- iotools::read.chunk(cr)
+                }
             }
         }
     }
