@@ -49,7 +49,10 @@
 #' take the same value. The values of the other fields are unimportant. This
 #' package is useful to process this kind of files, block by block.
 #'
-#' @docType package
+#' @keywords internal
+"_PACKAGE"
+
+## usethis namespace: start
 #' @import data.table
-#' @name fplyr
+## usethis namespace: end
 NULL
