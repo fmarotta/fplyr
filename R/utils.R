@@ -54,7 +54,7 @@ GetHeader <- function(input, col.names, header, sep) {
 }
 
 DefineFormatter <- function(sep, colClasses, stringsAsFactors, head,
-							select, drop, max_length = 2147483647) {
+                            select, drop, max_length = 2147483647) {
     function(chunk) {
         # Define the fread formatter: it reads the raw chunk and returns a
         # mighty data.table. Inspired by mstrsplit and dstrsplit.
@@ -64,37 +64,37 @@ DefineFormatter <- function(sep, colClasses, stringsAsFactors, head,
                   header = FALSE,
                   stringsAsFactors = stringsAsFactors,
                   col.names = head,
-				  colClasses = colClasses,
-				  select = select,
-				  drop = drop)
-		} else {
-		    last_n <- 0
-			part_d <- data.table()
-			while (last_n + max_length < length(chunk)) {
-			    new_n <- regexpr("\n[^\n]*$",
-								 rawToChar(chunk[(last_n + 1):(last_n + max_length)]))
-				if (new_n == -1)
-				    stop("The file has a line longer than ", max_length, " B.")
-				part_d <- rbind(part_d,
-								fread(rawToChar(chunk[(last_n + 1):(last_n + new_n)]),
-									  sep = sep,
-									  header = FALSE,
-									  stringsAsFactors = stringsAsFactors,
-									  col.names = head,
-									  colClasses = colClasses,
-									  select = select,
-									  drop = drop))
-				last_n <- last_n + new_n
-			}
-			rbind(part_d,
-				  fread(rawToChar(chunk[(last_n + 1):length(chunk)]),
-						sep = sep,
-						header = FALSE,
-						stringsAsFactors = stringsAsFactors,
-						col.names = head,
-						colClasses = colClasses,
-						select = select,
-						drop = drop))
-		}
+                  colClasses = colClasses,
+                  select = select,
+                  drop = drop)
+        } else {
+            last_n <- 0
+            part_d <- data.table()
+            while (last_n + max_length < length(chunk)) {
+                new_n <- regexpr("\n[^\n]*$",
+                                 rawToChar(chunk[(last_n + 1):(last_n + max_length)]))
+                if (new_n == -1)
+                    stop("The file has a line longer than ", max_length, " B.")
+                part_d <- rbind(part_d,
+                                fread(rawToChar(chunk[(last_n + 1):(last_n + new_n)]),
+                                      sep = sep,
+                                      header = FALSE,
+                                      stringsAsFactors = stringsAsFactors,
+                                      col.names = head,
+                                      colClasses = colClasses,
+                                      select = select,
+                                      drop = drop))
+                last_n <- last_n + new_n
+            }
+            rbind(part_d,
+                  fread(rawToChar(chunk[(last_n + 1):length(chunk)]),
+                        sep = sep,
+                        header = FALSE,
+                        stringsAsFactors = stringsAsFactors,
+                        col.names = head,
+                        colClasses = colClasses,
+                        select = select,
+                        drop = drop))
+        }
     }
 }
