@@ -79,6 +79,7 @@ fmply: from \strong{f}ile to \strong{m}ultiple files
 }
 
 \examples{
+library(data.table)
 
 fin <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 fout1 <- tempfile()

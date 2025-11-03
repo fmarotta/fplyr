@@ -73,6 +73,7 @@ ffply: from \strong{f}ile to \strong{f}ile
 }
 
 \examples{
+library(data.table)
 f1 <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 f2 <- tempfile()
 

@@ -39,3 +39,5 @@ rsconnect/
 # CRAN release message
 CRAN-RELEASE
 inst/doc
+/doc/
+/Meta/

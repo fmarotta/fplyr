@@ -70,6 +70,7 @@ flply: from \strong{f}ile to \strong{l}ist
 }
 
 \examples{
+library(data.table)
 f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 
 # Compute, within each block, the correlation between Sepal.Length and Petal.Length
