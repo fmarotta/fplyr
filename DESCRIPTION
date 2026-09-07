@@ -17,7 +17,7 @@ Imports:
     iotools (>= 0.2.5),
     parallel (>= 3.5.1)
 Suggests:
-    testthat,
+    testthat (>= 3.0.0),
     knitr,
     rmarkdown
 URL: https://github.com/fmarotta/fplyr
@@ -25,3 +25,4 @@ BugReports: https://github.com/fmarotta/fplyr/issues
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
 VignetteBuilder: knitr
+Config/testthat/edition: 3

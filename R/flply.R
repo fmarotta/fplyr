@@ -133,4 +133,3 @@ flply <- function(input, FUN, ...,
     close(input)
     res
 }
-

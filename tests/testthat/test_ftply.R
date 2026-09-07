@@ -1,5 +1,3 @@
-context("Returning data.table")
-
 file <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 
 
