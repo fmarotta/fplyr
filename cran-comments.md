@@ -1,18 +1,12 @@
 ## New version
-I am submitting a new (minor) version of the package.
+I am submitting a new version of the package, where {data.table} is imported rather than depended upon.
 
 ## Test environments
-* Rocky Linux 8.8, R 4.2.2
-* Arch Linux, R 4.3.1
-* (R-hub) Windows Server 2022, R-devel, 64 bit
-* (R-hub) Fedora Linux, R-devel, clang, gfortran
-* (R-hub) Ubuntu Linux 20.04.1 LTS, R-release, GCC
+* Ubuntu 24.04, R 4.6.1
+* (R-hub) linux, m1-san, macos, windows, atlas, mkl, nold
 
 ## R CMD check results
-I saw three NOTEs:
-* New maintainer (I have updated my email address)
-* Found the following non-standard files in the check directory: ''NULL''
-* Found the following detritus in the temp directory: 'lastMiKTeXException'
+No NOTEs.
 
 ## Downstream dependencies
 No dependencies exist at this time.
