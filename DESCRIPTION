@@ -1,7 +1,7 @@
 Package: fplyr
 Type: Package
 Title: Apply Functions to Blocks of Files
-Version: 1.4.0
+Version: 2.0.0
 Authors@R: person("Federico", "Marotta", email = "federico.marotta96@gmail.com",
     role = c("aut", "cre"), comment = c(ORCID = "0000-0002-0174-3901"))
 Maintainer: Federico Marotta <federico.marotta96@gmail.com>
@@ -23,6 +23,6 @@ Suggests:
 URL: https://github.com/fmarotta/fplyr
 BugReports: https://github.com/fmarotta/fplyr/issues
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0
