@@ -1,3 +1,7 @@
+# fplyr 2.0.0
+
+* Do not depend on `data.table`, just import it
+
 # fplyr 1.3.0
 
 * Do not limit the size of a block to 2^31B, but let it be virtually unlimited
