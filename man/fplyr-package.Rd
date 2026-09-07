@@ -74,5 +74,10 @@ Useful links:
 \author{
 \strong{Maintainer}: Federico Marotta \email{federico.marotta96@gmail.com} (\href{https://orcid.org/0000-0002-0174-3901}{ORCID})
 
+Authors:
+\itemize{
+  \item Federico Marotta \email{federico.marotta96@gmail.com} (\href{https://orcid.org/0000-0002-0174-3901}{ORCID})
+}
+
 }
 \keyword{internal}
