@@ -20,6 +20,7 @@
 #' ffply: from \strong{f}ile to \strong{f}ile
 #'
 #' @examples
+#' library(data.table)
 #' f1 <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 #' f2 <- tempfile()
 #'
@@ -40,14 +41,14 @@
 #' @export
 ffply <- function(input, output = "", FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
-				  nblocks = Inf, stringsAsFactors = FALSE, colClasses = NULL,
+                  nblocks = Inf, stringsAsFactors = FALSE, colClasses = NULL,
                   select = NULL, drop = NULL, col.names = NULL,
                   parallel = 1) {
     # Open the connections. The input must be binary, so that chunk.reader is
     # happy; the output is handled by data.table's fwrite.
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
-	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
+    dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
         warning("parallel > 1 is not supported on non-unix systems")

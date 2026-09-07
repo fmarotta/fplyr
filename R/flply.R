@@ -31,6 +31,7 @@
 #' flply: from \strong{f}ile to \strong{l}ist
 #'
 #' @examples
+#' library(data.table)
 #' f <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 #'
 #' # Compute, within each block, the correlation between Sepal.Length and Petal.Length
@@ -48,13 +49,13 @@
 #' @export
 flply <- function(input, FUN, ...,
                   key.sep = "\t", sep = "\t", skip = 0, header = TRUE,
-				  nblocks = Inf, stringsAsFactors = FALSE, colClasses = NULL,
+                  nblocks = Inf, stringsAsFactors = FALSE, colClasses = NULL,
                   select = NULL, drop = NULL, col.names = NULL,
                   parallel = 1) {
     # Prepare the input, find the header and define the formatter.
     input <- OpenInput(input, skip)
     head <- GetHeader(input, col.names, header, sep)
-	dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
+    dtstrsplit <- DefineFormatter(sep, colClasses, stringsAsFactors, head, select, drop)
 
     if (parallel > 1 && .Platform$OS.type != "unix") {
         warning("parallel > 1is not supported on non-unix systems")
@@ -132,4 +133,3 @@ flply <- function(input, FUN, ...,
     close(input)
     res
 }
-

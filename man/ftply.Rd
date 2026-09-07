@@ -74,6 +74,7 @@ ftply: from \strong{f}ile to data.\strong{t}able
 }
 
 \examples{
+library(data.table)
 f1 <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 
 # Compute the mean of the columns for each species

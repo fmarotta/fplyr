@@ -1,5 +1,3 @@
-context("Utils: OpenInput, GetHeader, dtstrsplit")
-
 # The utils are the same for all the functions, so we test them only with ftply
 file <- system.file("extdata", "dt_iris.csv", package = "fplyr")
 
