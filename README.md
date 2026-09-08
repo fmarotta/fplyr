@@ -1,6 +1,6 @@
 # fplyr
 
-[![cran version-ago](https://www.r-pkg.org/badges/version-ago/fplyr)](https://www.r-pkg.org/badges/version-ago/fplyr)
+[![cran version-ago](https://www.r-pkg.org/badges/version-ago/fplyr)](https://cran.r-project.org/package=fplyr)
 [![cran logs](https://cranlogs.r-pkg.org/badges/fplyr)](https://cranlogs.r-pkg.org/badges/fplyr)
 [![cran logs last-day](https://cranlogs.r-pkg.org/badges/last-day/fplyr)](https://cranlogs.r-pkg.org/badges/last-day/fplyr)
 [![cran logs grand-total](https://cranlogs.r-pkg.org/badges/grand-total/fplyr)](https://cranlogs.r-pkg.org/badges/grand-total/fplyr)
